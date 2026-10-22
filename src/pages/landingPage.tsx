@@ -1,6 +1,8 @@
 import { Link } from "react-router";
+import { useAuth } from "../auth/authProvider";
 
 const LandingPage = () => {
+  const { user } = useAuth();
   return (
     <header className="flex items-center justify-between border-b p-3">
       <div>
@@ -8,10 +10,10 @@ const LandingPage = () => {
       </div>
 
       <Link
-        to="/auth/sign-up"
+        to={user ? "/create-business" : "/auth/sign-up"}
         className="bg-card text-card-foreground rounded-full px-4 py-3 duration-300 hover:scale-105"
       >
-        Start using for free
+        {user ? "Create a new business" : "Get started"}
       </Link>
     </header>
   );
