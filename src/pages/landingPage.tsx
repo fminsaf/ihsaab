@@ -1,21 +1,122 @@
-import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { useAuth } from "../auth/authProvider";
+import supabase from "../lib/supabase";
+import { Navbar } from "../components/landing/Navbar";
+import { HeroSection } from "../components/landing/HeroSection";
+import { HowItWorksSection } from "../components/landing/HowItWorksSection";
+import { FeaturesSection } from "../components/landing/FeaturesSection";
+import { ComparisonSection } from "../components/landing/ComparisonSection";
+import { PricingSection } from "../components/landing/PricingSection";
+import { RoiCalculator } from "../components/landing/RoiCalculator";
+import { FaqSection } from "../components/landing/FaqSection";
+import { CtaSection } from "../components/landing/CtaSection";
+import { Footer } from "../components/landing/Footer";
 
 const LandingPage = () => {
-  const { user } = useAuth();
-  return (
-    <header className="flex items-center justify-between border-b p-3">
-      <div>
-        <h1 className="text-4xl font-extrabold">Ihsaab</h1>
-      </div>
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const [checkingRedirect, setCheckingRedirect] = useState(true);
 
-      <Link
-        to={user ? "/create-business" : "/auth/sign-up"}
-        className="bg-card text-card-foreground rounded-full px-4 py-3 duration-300 hover:scale-105"
-      >
-        {user ? "Create a new business" : "Get started"}
-      </Link>
-    </header>
+  useEffect(() => {
+    if (loading) return;
+
+    if (!user) {
+      // Non-authenticated visitors stay on the landing page
+      setCheckingRedirect(false);
+      return;
+    }
+
+    // Authenticated user: redirect away from landing page
+    let isMounted = true;
+
+    async function handleAuthRedirect() {
+      // 1. Check local storage for last used business ID
+      const cachedBid =
+        localStorage.getItem("ihsaab_last_bid") ||
+        localStorage.getItem("last_used_business_id");
+
+      if (cachedBid) {
+        navigate(`/b/${cachedBid}`, { replace: true });
+        return;
+      }
+
+      try {
+        // 2. Query Supabase for businesses belonging to user
+        const { data, error } = await supabase
+          .from("businesses")
+          .select("id")
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (!isMounted) return;
+
+        if (!error && data && data.length > 0 && data[0]?.id) {
+          const businessId = data[0].id;
+          localStorage.setItem("last_used_business_id", businessId);
+          navigate(`/b/${businessId}`, { replace: true });
+        } else {
+          // No business under user's profile
+          navigate("/create-business", { replace: true });
+        }
+      } catch {
+        if (isMounted) {
+          navigate("/create-business", { replace: true });
+        }
+      }
+    }
+
+    handleAuthRedirect();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user, loading, navigate]);
+
+  // While checking auth status or redirecting, avoid flashing landing page
+  if (loading || checkingRedirect) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <span className="text-xs font-medium">Loading Ihsaab...</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background text-foreground antialiased selection:bg-primary selection:text-primary-foreground">
+      <Navbar />
+
+      <main>
+        {/* Hero Section with Interactive Dashboard UI (No stats bar) */}
+        <HeroSection />
+
+        {/* 3-Step "Accounting without doing accounting" workflow */}
+        <HowItWorksSection />
+
+        {/* Core Features for SMB owners */}
+        <FeaturesSection />
+
+        {/* Ihsaab vs QuickBooks & Spreadsheets Comparison */}
+        <ComparisonSection />
+
+        {/* Pricing Section: $100/mo and $1,000/yr */}
+        <PricingSection />
+
+        {/* Interactive ROI & Time Saved Calculator */}
+        <RoiCalculator />
+
+        {/* Frequently Asked Questions */}
+        <FaqSection />
+
+        {/* Call-to-action */}
+        <CtaSection />
+      </main>
+
+      <Footer />
+    </div>
   );
 };
 

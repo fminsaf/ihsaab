@@ -10,6 +10,7 @@ import SignUpPage from "./pages/auth/signUp";
 import ProtectedLayout from "./pages/protected/protectedLayout";
 import { AuthProvider } from "./auth/authProvider";
 import CreateBusinessPage from "./pages/protected/createBusiness";
+import BusinessDashboardPage from "./pages/protected/businessDashboard";
 import { Toaster } from "./components/ui/toast";
 
 createRoot(document.getElementById("root")!).render(
@@ -21,6 +22,7 @@ createRoot(document.getElementById("root")!).render(
 
           <Route element={<ProtectedLayout />}>
             <Route path="create-business" element={<CreateBusinessPage />} />
+            <Route path="b/:bid" element={<BusinessDashboardPage />} />
           </Route>
 
           <Route path="auth" element={<AuthLayout />}>
