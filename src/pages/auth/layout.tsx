@@ -5,13 +5,13 @@ import supabase from "../../lib/supabase";
 import { Button } from "../../components/ui/button";
 import { toast } from "../../components/ui/toast";
 import {
-  Sparkles,
   LogOut,
   ArrowRight,
   User as UserIcon,
   Building,
   Loader2,
 } from "lucide-react";
+import { BrandLogo } from "../../components/BrandLogo";
 
 const AuthLayout = () => {
   const { user, loading } = useAuth();
@@ -63,9 +63,7 @@ const AuthLayout = () => {
         to="/"
         className="group mb-8 flex items-center gap-2.5 transition-transform hover:scale-105"
       >
-        <div className="flex size-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
-          <Sparkles className="size-5" />
-        </div>
+        <BrandLogo className="size-10 transition-transform group-hover:scale-105" />
         <div className="flex flex-col">
           <span className="text-2xl font-black tracking-tight text-foreground">
             Ihsaab

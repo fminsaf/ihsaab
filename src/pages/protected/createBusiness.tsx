@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { useAuth } from "../../auth/authProvider";
+import { BrandLogo } from "../../components/BrandLogo";
 import { COUNTRIES, CURRENCIES } from "../../data/businessOptions";
 import { BusinessDetailsStep } from "../../components/onboarding/BusinessDetailsStep";
 import { BusinessStartChoice } from "../../components/onboarding/BusinessStartChoice";
@@ -8,10 +9,7 @@ import { ExistingBusinessSetup } from "../../components/onboarding/ExistingBusin
 import type { BalanceTab, BankAccount, DueContact, FixedAsset, LoanItem, IncomeStatementItem, OwnerShare } from "../../types/businessOnboarding";
 import supabase from "../../lib/supabase";
 import { toast } from "../../components/ui/toast";
-import {
-  Sparkles,
-  ShieldCheck,
-} from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 const CreateBusinessPage = () => {
   const { user } = useAuth();
@@ -287,9 +285,7 @@ const CreateBusinessPage = () => {
         {/* Top Header */}
         <div className="mb-6 flex items-center justify-between">
           <Link to="/" className="group flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm transition-transform duration-200 group-hover:scale-105">
-              <Sparkles className="size-4" />
-            </div>
+            <BrandLogo className="size-9 transition-transform duration-200 group-hover:scale-105" />
             <div className="flex flex-col">
               <span className="text-lg font-black tracking-tight text-foreground">
                 Ihsaab

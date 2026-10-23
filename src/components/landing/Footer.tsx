@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Sparkles } from "lucide-react";
+import { BrandLogo } from "../BrandLogo";
 import { footerContent } from "../../data/landingContent";
 
 export function Footer() {
@@ -12,9 +12,7 @@ export function Footer() {
           {/* Brand Info */}
           <div className="md:col-span-2">
             <Link to="/" className="flex items-center gap-2">
-              <div className="flex size-8 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-                <Sparkles className="size-4" />
-              </div>
+              <BrandLogo className="size-8" />
               <span className="text-xl font-black tracking-tight text-foreground">
                 Ihsaab
               </span>

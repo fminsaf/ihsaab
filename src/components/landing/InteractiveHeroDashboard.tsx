@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { BUSINESS_PROFILES } from "../../data/heroDemo";
+import { BrandLogo } from "../BrandLogo";
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -108,9 +109,7 @@ export function InteractiveHeroDashboard() {
       <div className="grid min-h-[430px] md:grid-cols-[150px_1fr]">
         <aside className="border-border/60 bg-muted/10 hidden border-r p-3 md:block">
           <div className="mb-5 flex items-center gap-2 px-2 pt-1">
-            <span className="bg-primary text-primary-foreground flex size-7 items-center justify-center rounded-lg">
-              <span className="text-xs font-bold">i</span>
-            </span>
+            <BrandLogo className="size-7" />
             <span className="text-sm font-bold">Ihsaab</span>
           </div>
           {[

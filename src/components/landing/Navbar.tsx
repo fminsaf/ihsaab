@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { Menu, X, Sparkles, ArrowRight } from "lucide-react";
+import { Menu, X, ArrowRight } from "lucide-react";
+import { BrandLogo } from "../BrandLogo";
 import { navbarContent } from "../../data/landingContent";
 import { ThemeToggle } from "../ThemeToggle";
 
@@ -12,9 +13,7 @@ export function Navbar() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Brand Logo */}
         <Link to="/" className="group flex items-center gap-2.5">
-          <div className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-2xl shadow-sm transition-transform duration-200 group-hover:scale-105">
-            <Sparkles className="size-5" />
-          </div>
+          <BrandLogo className="size-9 transition-transform duration-200 group-hover:scale-105" />
           <div className="flex flex-col">
             <span className="text-foreground text-xl font-black tracking-tight">
               Ihsaab

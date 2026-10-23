@@ -1,7 +1,6 @@
 import type { ComponentType, Dispatch, RefObject, SetStateAction } from "react";
 import { Link } from "react-router";
 import {
-  Sparkles,
   Building2,
   X,
   ChevronDown,
@@ -15,6 +14,7 @@ import {
   MessageSquareText,
 } from "lucide-react";
 import { ThemeToggle } from "../../../components/ThemeToggle";
+import { BrandLogo } from "../../../components/BrandLogo";
 
 export interface BusinessOption {
   id: string;
@@ -79,9 +79,7 @@ export function DashboardSidebar({
       {/* Brand / Logo */}
       <div className="border-border/80 flex h-16 items-center justify-between border-b px-4">
         <Link to="/" className="group flex items-center gap-2.5">
-          <div className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-xl shadow-xs transition-transform group-hover:scale-105">
-            <Sparkles className="size-4" />
-          </div>
+            <BrandLogo className="size-8 transition-transform group-hover:scale-105" />
           <div className="flex flex-col">
             <span className="text-foreground text-base font-black tracking-tight">
               Ihsaab
