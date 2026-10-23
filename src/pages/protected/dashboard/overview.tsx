@@ -4,6 +4,7 @@ import { ArrowDownRight, ArrowUpRight, Landmark, Plus, RefreshCw, Scale, Wallet 
 import supabase from "../../../lib/supabase"
 import { Button } from "../../../components/ui/button"
 import { LEDGER_BY_CODE } from "../../../lib/ledgerAccounts"
+import { fetchAllRows } from "../../../lib/fetchAllRows"
 
 interface Transaction { id: string; type: string; amount: number; category: string | null; ledger_lines: { account_code: string; debit: number; credit: number }[] | null }
 interface Context { bid: string; setNewEntryOpen: (open: boolean) => void; currentBusinessName: string; currentBusinessCurrency?: string }
@@ -16,7 +17,7 @@ export default function OverviewPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const transactionResult = await supabase.from("transactions").select("id, type, amount, category, ledger_lines").eq("business_id", bid).limit(5000)
+    const transactionResult = await fetchAllRows((from, to) => supabase.from("transactions").select("id, type, amount, category, ledger_lines").eq("business_id", bid).order("created_at", { ascending: true }).range(from, to))
     setTransactions(transactionResult.data ?? [])
     setError(transactionResult.error?.message || "")
     setLoading(false)

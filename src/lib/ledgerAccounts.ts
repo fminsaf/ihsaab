@@ -41,4 +41,9 @@ export const LEDGER_ACCOUNTS: LedgerAccount[] = [
 ]
 
 export const LEDGER_BY_CODE = new Map(LEDGER_ACCOUNTS.map((account) => [account.code, account]))
-export const normalDebit = (account: LedgerAccount) => account.category === "asset" || account.category === "expense"
+const CREDIT_NORMAL_ACCOUNTS = new Set(["accumulated_depreciation"])
+const DEBIT_NORMAL_ACCOUNTS = new Set(["owner_drawings", "sales_returns"])
+
+export const normalDebit = (account: LedgerAccount) =>
+  DEBIT_NORMAL_ACCOUNTS.has(account.code) ||
+  (!CREDIT_NORMAL_ACCOUNTS.has(account.code) && (account.category === "asset" || account.category === "expense"))

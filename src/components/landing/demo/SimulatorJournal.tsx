@@ -18,7 +18,7 @@ export function SimulatorJournal({ transactionsCount, filteredTransactions, acti
             <div>
               <h4 className="text-sm font-bold">Live Business Journal</h4>
               <p className="text-[11px] text-muted-foreground">
-                All entries are automatically converted to balanced GAAP double-entry books
+                All entries are automatically converted to balanced double-entry books
               </p>
             </div>
 

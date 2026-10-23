@@ -33,31 +33,31 @@ export const featureSectionContent = {
       icon: MessageSquareCheck,
       title: "Zero-Jargon Bookkeeping",
       description:
-        "No complex charts of accounts, no debit/credit rules. Type 'Bought supplies for $80' and Ihsaab knows exactly which ledger accounts to touch.",
+        "Choose what happened, enter the amount, and add a plain-language note. Ihsaab handles the matching ledger entries behind the scenes.",
     },
     {
       icon: PiggyBank,
-      title: "Automated Tax Vault",
+      title: "Tax amounts kept visible",
       description:
-        "Ihsaab automatically estimates and isolates your sales tax and income tax provisions with every entry so you never face a terrifying year-end tax bill.",
+        "Add the tax amount you collected or paid when you record an entry. Ihsaab posts it separately so you can see the amount alongside your books.",
     },
     {
       icon: TrendingUp,
-      title: "Real-Time Cash Runway",
+      title: "A clear financial overview",
       description:
-        "Instantly know how much real profit you made this month and how many weeks of operating expenses your bank balance covers.",
+        "See recorded income, expenses, assets, liabilities, and equity together on your business dashboard.",
     },
     {
       icon: Receipt,
-      title: "Smart Invoicing & Tracking",
+      title: "Sales and customer payments",
       description:
-        "Create branded invoices in seconds. Once a client pays, the invoice automatically reconciles into your revenue accounts without manual matching.",
+        "Record product sales, service income, and customer payments. Keep an invoice number or note with the entry for easier follow-up.",
     },
     {
       icon: FileSpreadsheet,
       title: "1-Click CPA Export",
       description:
-        "Your accountant will love you. When tax season hits, export GAAP-compliant Balance Sheets, P&Ls, and General Ledgers with one click.",
+        "Review and print the profit and loss, balance sheet, cash flow, trial balance, and ledger activity for your accountant.",
     },
     {
       icon: Smartphone,
@@ -66,10 +66,10 @@ export const featureSectionContent = {
         "Log a coffee shop sale, retail transaction, or vendor payment right from your phone behind the counter or while on a client site.",
     },
   ],
-  securityTitle: "Bank-Grade 256-Bit Encryption & Automated Daily Backups",
+  securityTitle: "Private business records",
   securityDescription:
-    "Your financial data is private, encrypted, and isolated with Row Level Security.",
-  uptime: "99.99% Uptime",
+    "Business records are protected by sign-in and database access rules.",
+  uptime: "Account-controlled access",
 }
 
 export const howItWorksContent = {
@@ -80,32 +80,32 @@ export const howItWorksContent = {
     {
       number: "01",
       title: "Record What Happened",
-      subtitle: "Just describe the transaction in plain human English",
+      subtitle: "Choose the entry type, then add a plain-language note",
       description:
-        "Forget chart of accounts, debit/credit rules, or ledger codes. When you make a sale or pay an invoice, just record the amount and what it was for.",
+        "Forget chart of accounts, debit/credit rules, or ledger codes. Choose a sale, purchase, expense, or transfer, then record the amount and what it was for.",
       icon: PlusCircle,
       badge: "No accounting jargon",
-      visualText: "Sold 10 artisan ceramics for $450 via card",
+      visualText: "Paid rent $1,200 from the bank",
     },
     {
       number: "02",
       title: "Ihsaab Autopilots the Books",
       subtitle: "The engine runs double-entry accounting in the background",
       description:
-        "Ihsaab maps the entry to GAAP-compliant journal entries, splits sales tax or VAT into your tax reserve, balances your ledger, and recalculates cash flow in milliseconds.",
+        "Ihsaab creates the matching ledger entries and updates your reports behind the scenes. Add any tax amount you already know when recording the entry.",
       icon: Cpu,
-      badge: "Double-entry in 0.02s",
-      visualText: "Dr. Operating Cash $450 | Cr. Retail Sales $405 | Tax $45",
+      badge: "Postings created automatically",
+      visualText: "Dr. Rent Expense $1,200 · Cr. Bank $1,200",
     },
     {
       number: "03",
-      title: "Flawless Financials on Demand",
-      subtitle: "Instant P&L, balance sheets, and tax-ready summaries",
+      title: "Financial reports on demand",
+      subtitle: "Clear reports whenever you need them",
       description:
-        "Always know your real profit margin and cash runway. When tax season arrives, send a clean, audit-proof export directly to your accountant with a single click.",
+        "Review current totals and print financial statements or ledger activity to share with your accountant.",
       icon: FileCheck,
-      badge: "CPA & Tax Ready",
-      visualText: "Profit: $13,420 • Margin: 62% • Tax Reserve: $1,340",
+      badge: "Reports on demand",
+      visualText: "Profit & loss · Balance sheet · Cash flow",
     },
   ],
   whatHappens: "What happens:",
@@ -118,14 +118,14 @@ export const pricingContent = {
     "No hidden tiers, no surprise add-on charges. Total accounting peace of mind for your business.",
   features: [
     "Unlimited business entries & transactions",
-    "Automated GAAP double-entry ledger engine",
-    "Real-time Automated Tax Vault & segregation",
+    "Automatic double-entry ledger postings",
+    "Tax amounts recorded with each entry",
     "Instant Profit & Loss, Balance Sheet, & Cash Flow",
-    "1-Click CPA and Tax Accountant export package",
-    "Smart Invoicing & automated payment reconciliation",
+    "Printable financial statements and ledgers",
+    "Customer and vendor records",
     "Multi-device sync (iPhone, Android, iPad, Desktop)",
     "Document & receipt attachment storage",
-    "Bank-grade 256-bit encryption & automated backups",
+    "Private business records with access controls",
     "Priority SMB customer support",
   ],
   planName: "Ihsaab Complete",
@@ -151,22 +151,22 @@ export const faqContent = {
     {
       question: "Will my accountant or CPA be able to work with Ihsaab?",
       answer:
-        "Yes, CPAs love Ihsaab. While you interact with a friendly, jargon-free interface, the underlying database strictly maintains GAAP-compliant General Ledgers, Profit & Loss statements, and Balance Sheets. You can export complete CPA-ready financial statements with one click anytime.",
+        "Ihsaab provides ledger activity and printable profit and loss, balance sheet, cash flow, and trial balance reports. You can review and share these records with your accountant.",
     },
     {
-      question: "How does the Automated Tax Vault work?",
+      question: "How are tax amounts recorded?",
       answer:
-        "Whenever you record an income or expense entry, Ihsaab instantly calculates the relevant tax proportion (sales tax, VAT, or income tax reserve) and segregates it in your dashboard metrics. This ensures you always know your true spendable cash versus tax obligations.",
+        "You enter the tax amount when recording an entry. Ihsaab posts it to a separate ledger account so it appears in your financial records.",
     },
     {
       question: "What if I make a mistake or need to adjust an entry?",
       answer:
-        "You can edit or void any entry at any time with a single tap. Ihsaab will automatically adjust the corresponding double-entry journals, reverse the tax segregation, and update your financial statements synchronously.",
+        "You can correct posted transactions. Ihsaab records a reversal and replacement so the transaction history remains visible. Opening balances are locked after setup.",
     },
     {
       question: "Is my business data secure and private?",
       answer:
-        "Absolutely. Ihsaab utilizes bank-grade 256-bit encryption in transit and at rest, powered by Supabase infrastructure with granular Row Level Security (RLS). Only authenticated members of your business can ever access your records.",
+        "Business records are protected by sign-in and database access rules. Each owner can access only the business records allowed for their account.",
     },
     {
       question: "Can I use Ihsaab on my smartphone or tablet?",
@@ -184,9 +184,9 @@ export const comparisonContent = {
     { feature: "Accounting Learning Curve", traditional: "Requires courses or accounting background", spreadsheets: "Requires custom formulas and accounting skills", ihsaab: "Zero learning curve: write what happened" },
     { feature: "Data Entry Experience", traditional: "Tedious journal codes, debit & credit columns", spreadsheets: "Manual entry prone to broken cell links", ihsaab: "Plain business description + amount" },
     { feature: "Double-Entry Book Balancing", traditional: "Manual reconciliation; easy to be out of balance", spreadsheets: "No automatic balancing mechanism", ihsaab: "100% automated & mathematically verified" },
-    { feature: "Tax Preparation & Reserves", traditional: "Chaotic calculation at year-end", spreadsheets: "Manual guessing and formula errors", ihsaab: "Automatic tax vault reservation per transaction" },
+    { feature: "Tax Preparation & Reserves", traditional: "Chaotic calculation at year-end", spreadsheets: "Manual guessing and formula errors", ihsaab: "Tax amounts recorded with each entry" },
     { feature: "Time Spent per Week", traditional: "4 - 8 hours of reconciliation headaches", spreadsheets: "5+ hours of formula maintenance", ihsaab: "Under 10 minutes (just create an entry!)" },
-    { feature: "CPA / Accountant Export", traditional: "Messy adjustments needed", spreadsheets: "Accountants charge extra to clean up", ihsaab: "Instant, standard GAAP financial statements" },
+    { feature: "CPA / Accountant Export", traditional: "Messy adjustments needed", spreadsheets: "Accountants charge extra to clean up", ihsaab: "Printable financial reports and ledger activity" },
   ],
 }
 
@@ -210,7 +210,7 @@ export const ctaContent = {
   eyebrow: "Never stress over bookkeeping again",
   title: "Stop doing accounting. Start running your business.",
   description:
-    "All it takes is creating a new entry in your business dashboard. Ihsaab handles the double-entry ledger, tax segregation, and financial reporting automatically.",
+    "Create an entry in your business dashboard. Ihsaab creates the matching ledger postings and updates your financial reports automatically.",
   primaryAction: "Get Started Free",
   signInAction: "Sign In",
   assurances: ["No credit card required", "14-day full feature trial", "Cancel anytime with 1 click"],
@@ -219,7 +219,7 @@ export const ctaContent = {
 export const footerContent = {
   description:
     "The modern accounting application for small business owners. Do accounting without doing accounting. Simply create an entry—Ihsaab handles the rest.",
-  status: "All systems operational • 256-bit SSL secured",
+  status: "Business records protected by account access controls",
   productHeading: "Product",
   productLinks: [
     { label: "Interactive Simulator", href: "#demo" },
@@ -234,7 +234,7 @@ export const footerContent = {
     { label: "Sign In", href: "/auth/sign-in", internal: true },
     { label: "FAQ & Support", href: "#faq", internal: false },
   ],
-  compliance: "GAAP & IFRS Compliant",
+  compliance: "Financial reports built from your recorded entries",
   copyright: "Ihsaab Inc. Built for small business owners worldwide.",
   legalLinks: ["Privacy Policy", "Terms of Service", "Security"],
 }

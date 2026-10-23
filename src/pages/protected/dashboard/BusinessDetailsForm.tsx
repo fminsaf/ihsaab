@@ -40,8 +40,8 @@ export function BusinessDetailsForm({ name, setName, country, currency, taxId, s
                   placeholder="e.g. Apex Studio, Al-Noor Cafe"
                 />
                 <FieldDescription>
-                  This name appears on invoices, account ledgers, and financial
-                  exports.
+                  This name appears on your dashboard, ledgers, and financial
+                  statements.
                 </FieldDescription>
               </Field>
 
@@ -115,7 +115,7 @@ export function BusinessDetailsForm({ name, setName, country, currency, taxId, s
                     placeholder="e.g. 300123456700003"
                   />
                   <FieldDescription>
-                    Printed on your tax invoices.
+                    Saved with your business profile.
                   </FieldDescription>
                 </Field>
 

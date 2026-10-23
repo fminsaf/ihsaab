@@ -73,8 +73,8 @@ export function useNewTransactionDialog({ open, businessId, onOpenChange, onSucc
     }
     const amount = parseFloat(form.amount)
     const usesInventory = form.action === "sale" || form.action === "stock_purchase"
-    if (!usesInventory && (!form.amount || isNaN(amount) || amount < 0)) {
-      toast.add({ description: "Please enter a valid amount (≥ 0).", type: "error" })
+    if (!usesInventory && (!form.amount || isNaN(amount) || amount <= 0)) {
+      toast.add({ description: "Please enter an amount greater than zero.", type: "error" })
       return false
     }
     if (usesInventory && (inventoryLines.length === 0 || inventoryLines.some((line) => !line.product_id || !Number.isFinite(Number(line.quantity)) || Number(line.quantity) <= 0))) {
@@ -182,7 +182,7 @@ export function useNewTransactionDialog({ open, businessId, onOpenChange, onSucc
     let typePayload: Record<string, unknown> = {}
 
     if (form.action === "customer_payment") {
-      typePayload = { category: `Customer payment${form.payment_method ? ` · ${form.payment_method}` : ""}`, tax_reserved: null }
+      typePayload = { category: `Customer payment${form.payment_method ? ` · ${form.payment_method}` : ""}`, tax_reserved: 0 }
     } else if (form.action === "purchase") {
       typePayload = {
         category: ["Purchase", form.payment_status === "paid" ? "Paid" : "Unpaid", form.category.trim(), form.payment_status === "paid" && form.payment_method === "bank_transfer" ? form.payment_method : ""].filter(Boolean).join(" · "),
@@ -191,6 +191,11 @@ export function useNewTransactionDialog({ open, businessId, onOpenChange, onSucc
     } else if (form.action === "asset_purchase") {
       typePayload = {
         category: ["Asset purchase", form.payment_status === "paid" ? "Paid" : "Unpaid", form.payment_status === "paid" && form.payment_method === "bank_transfer" ? form.payment_method : ""].filter(Boolean).join(" · "),
+        tax_reserved: form.tax_reserved ? parseFloat(form.tax_reserved) : 0,
+      }
+    } else if (form.action === "service_income") {
+      typePayload = {
+        category: ["Service income", form.payment_status === "paid" ? "Paid" : "Unpaid", form.payment_status === "paid" && form.payment_method === "bank_transfer" ? "bank_transfer" : ""].filter(Boolean).join(" · "),
         tax_reserved: form.tax_reserved ? parseFloat(form.tax_reserved) : 0,
       }
     } else if (form.type === "income") {
@@ -204,18 +209,18 @@ export function useNewTransactionDialog({ open, businessId, onOpenChange, onSucc
       }
     } else if (form.type === "expense") {
       typePayload = {
-        category: form.category || "Other Expense",
+        category: [form.category || "Other Expense", form.payment_method === "bank_transfer" ? "bank_transfer" : ""].filter(Boolean).join(" · "),
         tax_reserved: form.tax_reserved ? parseFloat(form.tax_reserved) : 0,
       }
     } else if (form.action === "transfer") {
       typePayload = {
         category: form.transfer_direction === "cash_to_bank" ? "Transfer · Cash to bank" : "Transfer · Bank to cash",
-        tax_reserved: null,
+        tax_reserved: 0,
       }
     } else {
       typePayload = {
         category: null,
-        tax_reserved: null,
+        tax_reserved: 0,
       }
     }
 
@@ -279,6 +284,10 @@ export function useNewTransactionDialog({ open, businessId, onOpenChange, onSucc
       addPosting("Cost of Goods Sold", "Debit", cost)
       addPosting("Inventory", "Credit", cost)
     }
+  } else if (form.action === "service_income") {
+    addPosting(form.payment_status === "unpaid" ? "Accounts Receivable (Customer Dues)" : paymentLedger, "Debit", grossAmount)
+    addPosting("Service Revenue", "Credit")
+    addTaxPosting("Taxes Payable", "Credit")
   } else if (form.action === "customer_payment") {
     addPosting(paymentLedger, "Debit")
     addPosting("Accounts Receivable (Customer Dues)", "Credit")

@@ -54,7 +54,7 @@ export function BusinessDetailsStep({ step, businessName, setBusinessName, count
                         placeholder="e.g. Al-Noor Cafe, Prime Retail, Tech Studio"
                       />
                       <FieldDescription>
-                        This will appear on all your invoices, tax summaries, and financial statements.
+                        This name appears on your business dashboard and financial statements.
                       </FieldDescription>
                     </Field>
 

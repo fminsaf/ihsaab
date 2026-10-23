@@ -2,7 +2,7 @@ import type { ComponentType } from "react"
 import { TrendingUp, TrendingDown, ArrowLeftRight } from "lucide-react"
 
 export type TransactionType = "income" | "expense" | "transfer"
-export type EntryAction = "sale" | "customer_payment" | "purchase" | "stock_purchase" | "asset_purchase" | "expense" | "transfer"
+export type EntryAction = "sale" | "service_income" | "customer_payment" | "purchase" | "stock_purchase" | "asset_purchase" | "expense" | "transfer"
 export type PaymentMethod = "cash" | "bank_transfer"
 export type TransferDirection = "cash_to_bank" | "bank_to_cash"
 
@@ -67,6 +67,15 @@ export const TRANSACTION_TYPES: {
     transactionType: "income",
     label: "Customer payment",
     description: "Record money received for a previous sale",
+    icon: TrendingUp,
+    color: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-emerald-500/10",
+  },
+  {
+    value: "service_income",
+    transactionType: "income",
+    label: "Service income",
+    description: "Record services, project work, or other income without inventory",
     icon: TrendingUp,
     color: "text-emerald-600 dark:text-emerald-400",
     bg: "bg-emerald-500/10",

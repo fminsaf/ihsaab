@@ -5,7 +5,8 @@ import supabase from "../../../lib/supabase"
 import { Button } from "../../../components/ui/button"
 import { Input } from "../../../components/ui/input"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../../../components/ui/dialog"
-import { LEDGER_ACCOUNTS, type LedgerAccount } from "../../../lib/ledgerAccounts"
+import { LEDGER_ACCOUNTS, normalDebit, type LedgerAccount } from "../../../lib/ledgerAccounts"
+import { fetchAllRows } from "../../../lib/fetchAllRows"
 
 type Account = LedgerAccount
 interface Entry { id: string; account_code: string; contact_id: string | null; entry_date: string; description: string | null; debit: number; credit: number }
@@ -27,7 +28,7 @@ export default function LedgersPage() {
   const load = useCallback(async () => {
     setLoading(true)
     const [transactionResult, contactResult] = await Promise.all([
-      supabase.from("transactions").select("id, contact_id, date, created_at, description, ledger_lines").eq("business_id", bid).order("date", { ascending: false }),
+      fetchAllRows((from, to) => supabase.from("transactions").select("id, contact_id, date, created_at, description, ledger_lines").eq("business_id", bid).order("date", { ascending: false }).range(from, to)),
       supabase.from("contacts").select("id, name").eq("business_id", bid),
     ])
     const postings = (transactionResult.data ?? []) as TransactionPosting[]
@@ -69,7 +70,7 @@ export default function LedgersPage() {
 
     {loading ? <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }, (_, index) => <div key={index} className="h-52 animate-pulse rounded-2xl bg-muted" />)}</div> : groups.length ? groups.map((group) => <section key={group.category} className="space-y-3"><h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{group.category} ledgers</h3><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{group.rows.map((account) => {
       const totals = accountTotals(account)
-      const debitIsBalanceSide = account.category === "asset" || account.category === "expense"
+      const debitIsBalanceSide = normalDebit(account)
       const balance = debitIsBalanceSide ? totals.debitBalance || totals.creditBalance : totals.creditBalance || totals.debitBalance
       const balanceSide = totals.debitBalance ? "debit" : totals.creditBalance ? "credit" : debitIsBalanceSide ? "debit" : "credit"
       return <button key={account.code} type="button" onClick={() => setSelected(account)} className="group rounded-2xl border border-border bg-card p-4 text-left shadow-xs transition hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">

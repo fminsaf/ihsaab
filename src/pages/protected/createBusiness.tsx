@@ -159,11 +159,9 @@ const CreateBusinessPage = () => {
         .select()
         .single();
 
-      if (businessError) {
-        console.warn("Supabase businesses insert error:", businessError);
-      }
+      if (businessError || !businessData?.id) throw businessError ?? new Error("Business was not created.");
 
-      const bid = businessData?.id || `biz_${Date.now().toString(36)}`;
+      const bid = businessData.id;
       localStorage.setItem("last_used_business_id", bid);
       localStorage.setItem("ihsaab_last_bid", bid);
 
@@ -173,8 +171,8 @@ const CreateBusinessPage = () => {
       });
 
       navigate(`/b/${bid}`, { replace: true });
-    } catch {
-      toast.add({ description: "Error creating business.", type: "error" });
+    } catch (error) {
+      toast.add({ description: error instanceof Error ? error.message : "Error creating business.", type: "error" });
     } finally {
       setIsSubmitting(false);
     }
@@ -210,11 +208,9 @@ const CreateBusinessPage = () => {
         .select()
         .single();
 
-      if (businessError) {
-        console.warn("Supabase businesses insert error:", businessError);
-      }
+      if (businessError || !businessData?.id) throw businessError ?? new Error("Business was not created.");
 
-      const bid = businessData?.id || `biz_${Date.now().toString(36)}`;
+      const bid = businessData.id;
 
       // 2. Prepare Opening Chart of Accounts (Balance Sheet + Income Statement)
       const initialAccounts = [
@@ -252,14 +248,15 @@ const CreateBusinessPage = () => {
           balance: o.investedCapital,
         })),
         { business_id: bid, name: "Retained Earnings / Historical Equity", category: "equity", balance: retainedEarnings },
-      ].filter((a) => a.balance > 0);
+      ].filter((a) => Number.isFinite(a.balance) && a.balance !== 0);
 
-      if (businessData?.id) {
-        const { error: chartError } = await supabase.rpc("initialize_business_opening", {
-          p_business_id: bid,
-          p_opening_balances: initialAccounts.map(({ name, category, balance }) => ({ name, category, balance })),
-        });
-        if (chartError) throw chartError;
+      const { error: chartError } = await supabase.rpc("initialize_business_opening", {
+        p_business_id: bid,
+        p_opening_balances: initialAccounts.map(({ name, category, balance }) => ({ name, category, balance })),
+      });
+      if (chartError) {
+        await supabase.from("businesses").delete().eq("id", bid);
+        throw chartError;
       }
 
       localStorage.setItem("last_used_business_id", bid);
@@ -271,8 +268,8 @@ const CreateBusinessPage = () => {
       });
 
       navigate(`/b/${bid}`, { replace: true });
-    } catch {
-      toast.add({ description: "Error saving business records.", type: "error" });
+    } catch (error) {
+      toast.add({ description: error instanceof Error ? error.message : "Error saving business records.", type: "error" });
     } finally {
       setIsSubmitting(false);
     }
@@ -396,10 +393,10 @@ const CreateBusinessPage = () => {
           </div>
         </div>
 
-        {/* Security / GAAP Compliance Footer Note */}
+        {/* Bookkeeping setup note */}
         <div className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <ShieldCheck className="size-4 text-emerald-500" />
-          <span>GAAP compliant double-entry structure initialized upon creation</span>
+          <span>Opening balances are posted to your books when setup is complete</span>
         </div>
       </div>
     </div>

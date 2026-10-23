@@ -95,6 +95,8 @@ export function NewTransactionDialog({
                   <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     {form.action === "sale"
                       ? "Sale details"
+                      : form.action === "service_income"
+                      ? "Service income details"
                       : form.action === "customer_payment"
                       ? "Payment details"
                       : form.action === "purchase"
@@ -113,7 +115,7 @@ export function NewTransactionDialog({
                   <div className="grid grid-cols-2 gap-3">
 
                     {/* ── INCOME fields ─── */}
-                    {(form.action === "sale" || form.action === "customer_payment") && (
+                    {(form.action === "sale" || form.action === "service_income" || form.action === "customer_payment") && (
                       <>
                         <div className="col-span-2 space-y-1.5">
                           <Label htmlFor="contact_id">Customer</Label>
@@ -138,7 +140,7 @@ export function NewTransactionDialog({
                           </div>
                           <p className="text-xs text-muted-foreground">The customer name will be saved with this transaction.</p>
                         </div>
-                        {form.action === "sale" && <div className="space-y-1.5">
+                        {(form.action === "sale" || form.action === "service_income") && <div className="space-y-1.5">
                           <Label htmlFor="sale-payment-status">Payment status</Label>
                           <Select value={form.payment_status} onValueChange={(v) => setField("payment_status", v as "paid" | "unpaid")}>
                             <SelectTrigger id="sale-payment-status" className="w-full"><SelectValue>{form.payment_status === "unpaid" ? "Customer owes me" : "Paid now"}</SelectValue></SelectTrigger>
@@ -157,12 +159,12 @@ export function NewTransactionDialog({
                             }
                           />
                         </div>}
-                        {form.action === "sale" && <div className="space-y-1.5">
+                        {(form.action === "sale" || form.action === "service_income") && <div className="space-y-1.5">
                           <Label htmlFor="sale-tax-amount">Tax amount</Label>
                           <Input id="sale-tax-amount" type="number" min="0" step="0.01" placeholder="0.00" value={form.tax_reserved} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setField("tax_reserved", e.target.value)} />
                           <p className="text-xs text-muted-foreground">Added to the amount due.</p>
                         </div>}
-                        {((form.action === "sale" && form.payment_status === "paid") || form.action === "customer_payment") && <div className="space-y-1.5">
+                        {(((form.action === "sale" || form.action === "service_income") && form.payment_status === "paid") || form.action === "customer_payment") && <div className="space-y-1.5">
                           <Label htmlFor="income_payment_method">Payment Method</Label>
                           <Select
                             value={form.payment_method}

@@ -23,7 +23,7 @@ export function JournalDetailDialog({ transaction, onClose }: JournalDetailDialo
         <div className="mt-4 space-y-3.5 text-sm">
           <p className="text-muted-foreground text-xs leading-relaxed">
             As an SMB owner, you only typed <span className="font-semibold text-foreground">"{transaction.description}"</span> for{" "}
-            <span className="font-semibold text-foreground">${transaction.amount}</span>. Here is the GAAP double-entry journal Ihsaab automatically executed behind the scenes:
+            <span className="font-semibold text-foreground">${transaction.amount}</span>. Here is the double-entry journal Ihsaab created automatically:
           </p>
           <div className="rounded-2xl border border-border/80 bg-muted/30 p-4 space-y-2 text-xs">
             <div className="flex justify-between font-mono"><span className="text-muted-foreground">DEBIT:</span><span className="font-semibold text-foreground">{transaction.journal.debitAccount} (+${transaction.amount})</span></div>

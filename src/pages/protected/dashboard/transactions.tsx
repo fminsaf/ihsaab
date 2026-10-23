@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { toast } from "../../../components/ui/toast"
 import { NewTransactionDialog } from "../../../components/transactions/NewTransactionDialog"
 import { LEDGER_BY_CODE } from "../../../lib/ledgerAccounts"
+import { fetchAllRows } from "../../../lib/fetchAllRows"
 import {
   ArrowLeftRight,
   TrendingUp,
@@ -87,23 +88,25 @@ export default function TransactionsPage() {
   const [editing, setEditing] = useState<Transaction | null>(null)
   const [editForm, setEditForm] = useState({ amount: "", date: "", description: "", category: "", contact_id: "", tax_reserved: "" })
   const [savingCorrection, setSavingCorrection] = useState(false)
+  const [loadError, setLoadError] = useState("")
 
   const fetchTransactions = useCallback(async () => {
     if (!bid) return
     setLoading(true)
     const [txResult, contactsResult, inventoryResult] = await Promise.all([
-      supabase.from("transactions").select("id, type, amount, description, category, created_at, date, contact_id, tax_reserved, correction_of, correction_role, ledger_lines").eq("business_id", bid).order("created_at", { ascending: false }).limit(100),
+      fetchAllRows((from, to) => supabase.from("transactions").select("id, type, amount, description, category, created_at, date, contact_id, tax_reserved, correction_of, correction_role, ledger_lines").eq("business_id", bid).order("created_at", { ascending: false }).range(from, to)),
       supabase.from("contacts").select("id, name").eq("business_id", bid),
       supabase.from("inventory_products").select("id, name, sku, unit, quantity_on_hand, sale_price, purchase_cost, is_archived").eq("business_id", bid),
     ])
     const transactionIds = (txResult.data ?? []).map((transaction) => transaction.id)
-    const itemResult = transactionIds.length
-      ? await supabase.from("transaction_items").select("id, transaction_id, product_id, item_name, sku_snapshot, unit_snapshot, quantity, unit_price, line_total, stock_delta").in("transaction_id", transactionIds)
-      : { data: [], error: null }
+    const itemResults = await Promise.all(Array.from({ length: Math.ceil(transactionIds.length / 500) }, (_, index) =>
+      supabase.from("transaction_items").select("id, transaction_id, product_id, item_name, sku_snapshot, unit_snapshot, quantity, unit_price, line_total, stock_delta").in("transaction_id", transactionIds.slice(index * 500, index * 500 + 500))))
+    const itemError = itemResults.find((result) => result.error)?.error
     setTransactions(txResult.data ?? [])
-    setTransactionItems((itemResult.data ?? []) as TransactionItem[])
+    setTransactionItems(itemResults.flatMap((result) => result.data ?? []) as TransactionItem[])
     setInventoryProducts((inventoryResult.data ?? []) as InventoryProduct[])
     setContactNames(Object.fromEntries((contactsResult.data ?? []).map((contact) => [contact.id, contact.name])))
+    setLoadError(txResult.error?.message ?? itemError?.message ?? contactsResult.error?.message ?? inventoryResult.error?.message ?? "")
     setLoading(false)
   }, [bid])
 
@@ -192,6 +195,7 @@ export default function TransactionsPage() {
   }
 
   // ── Empty state ───────────────────────────────────────────────────────────
+  if (loadError) return <div className="mx-auto max-w-4xl rounded-2xl border border-destructive/30 bg-destructive/5 p-5 text-sm text-destructive" role="alert">Could not load transactions: {loadError}<Button className="ml-3" variant="outline" size="sm" onClick={() => void fetchTransactions()}>Retry</Button></div>
   if (transactions.length === 0) {
     return (
       <>
@@ -254,7 +258,7 @@ export default function TransactionsPage() {
                 <button type="button" aria-expanded={expandedId === tx.id} onClick={() => setExpandedId((current) => current === tx.id ? null : tx.id)} className="flex w-full items-center gap-4 px-4 py-3 text-left hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <div className={["flex size-9 shrink-0 items-center justify-center rounded-xl", meta.bg].join(" ")}><Icon className={["size-4", meta.color].join(" ")} /></div>
                   <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-foreground">{meta.label}</p><p className="truncate text-xs text-muted-foreground">{tx.description ?? tx.category ?? "—"}</p></div>
-                  <div className="shrink-0 text-right"><p className={["text-sm font-bold", amountColor].join(" ")}>{amountPrefix}{tx.amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p><p className="flex items-center justify-end gap-1 text-xs text-muted-foreground"><CalendarDays className="size-3" />{new Date(tx.date || tx.created_at).toLocaleDateString()}</p></div>
+                  <div className="shrink-0 text-right"><p className={["text-sm font-bold", amountColor].join(" ")}>{amountPrefix}{tx.amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p><p className="flex items-center justify-end gap-1 text-xs text-muted-foreground"><CalendarDays className="size-3" />{new Date(`${tx.date || tx.created_at.slice(0, 10)}T00:00:00`).toLocaleDateString()}</p></div>
                   <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition-transform ${expandedId === tx.id ? "rotate-180" : ""}`} />
                 </button>
                 {expandedId === tx.id && <div className="grid gap-3 border-t border-border bg-muted/20 px-4 py-4 text-sm sm:grid-cols-2">
@@ -266,7 +270,7 @@ export default function TransactionsPage() {
                   {tx.ledger_lines?.length ? <div className="sm:col-span-2"><p className="mb-1 text-xs text-muted-foreground">Automatic ledger posting</p><div className="space-y-1">{tx.ledger_lines.map((line, index) => <p key={`${line.account_code}-${index}`} className="flex justify-between gap-3 font-medium"><span className="truncate">{LEDGER_BY_CODE.get(line.account_code)?.name ?? "Ledger"} · {Number(line.debit) > 0 ? "Debit" : "Credit"}</span><span className="shrink-0 tabular-nums">{Number(Number(line.debit) || Number(line.credit)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></p>)}</div></div> : null}
                   <div><p className="text-xs text-muted-foreground">Recorded</p><p className="font-medium">{new Date(tx.created_at).toLocaleString()}</p></div>
                   {tx.correction_role && <div><p className="text-xs text-muted-foreground">Correction record</p><p className="font-medium capitalize">{tx.correction_role}{tx.correction_of ? ` of ${tx.correction_of.slice(0, 8)}` : ""}</p></div>}
-                  <div className="flex items-center justify-end sm:col-span-2"><Button type="button" variant="outline" size="sm" className="gap-2" disabled={tx.correction_role === "reversal"} onClick={() => beginEdit(tx)}><Pencil className="size-3.5" />{tx.correction_role === "reversal" ? "Reversal entry" : "Edit transaction"}</Button></div>
+                  <div className="flex items-center justify-end sm:col-span-2"><Button type="button" variant="outline" size="sm" className="gap-2" disabled={tx.correction_role === "reversal" || tx.type === "opening"} onClick={() => beginEdit(tx)}><Pencil className="size-3.5" />{tx.correction_role === "reversal" ? "Reversal entry" : tx.type === "opening" ? "Opening balance (locked)" : "Edit transaction"}</Button></div>
                 </div>}
               </div>
             )
