@@ -29,23 +29,15 @@ const LandingPage = () => {
 
     // Authenticated user: redirect away from landing page
     let isMounted = true;
+    const userId = user.id;
 
     async function handleAuthRedirect() {
-      // 1. Check local storage for last used business ID
-      const cachedBid =
-        localStorage.getItem("ihsaab_last_bid") ||
-        localStorage.getItem("last_used_business_id");
-
-      if (cachedBid) {
-        navigate(`/b/${cachedBid}`, { replace: true });
-        return;
-      }
-
       try {
-        // 2. Query Supabase for businesses belonging to user
+        // Always validate against Supabase; cached IDs can point to deleted businesses.
         const { data, error } = await supabase
           .from("businesses")
           .select("id")
+          .eq("owner_id", userId)
           .order("created_at", { ascending: false })
           .limit(1);
 
@@ -53,10 +45,12 @@ const LandingPage = () => {
 
         if (!error && data && data.length > 0 && data[0]?.id) {
           const businessId = data[0].id;
+          localStorage.setItem("ihsaab_last_bid", businessId);
           localStorage.setItem("last_used_business_id", businessId);
           navigate(`/b/${businessId}`, { replace: true });
         } else {
-          // No business under user's profile
+          localStorage.removeItem("ihsaab_last_bid");
+          localStorage.removeItem("last_used_business_id");
           navigate("/create-business", { replace: true });
         }
       } catch {

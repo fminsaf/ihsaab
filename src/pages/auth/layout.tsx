@@ -36,14 +36,7 @@ const AuthLayout = () => {
   };
 
   const handleContinueToApp = () => {
-    const cachedBid =
-      localStorage.getItem("ihsaab_last_bid") ||
-      localStorage.getItem("last_used_business_id");
-    if (cachedBid) {
-      navigate(`/b/${cachedBid}`);
-    } else {
-      navigate("/create-business");
-    }
+    navigate("/");
   };
 
   if (loading) {

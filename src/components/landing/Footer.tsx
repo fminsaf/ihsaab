@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { Sparkles } from "lucide-react";
+import { footerContent } from "../../data/landingContent";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -19,73 +20,34 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-3 max-w-sm text-sm text-muted-foreground leading-relaxed">
-              The modern accounting application for small business owners. Do accounting
-              without doing accounting. Simply create an entry—Ihsaab handles the rest.
+              {footerContent.description}
             </p>
             <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
               <span className="inline-block size-2 rounded-full bg-emerald-500" />
-              <span>All systems operational • 256-bit SSL secured</span>
+              <span>{footerContent.status}</span>
             </div>
           </div>
 
           {/* Product Links */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
-              Product
+              {footerContent.productHeading}
             </h4>
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-              <li>
-                <a href="#demo" className="transition hover:text-foreground">
-                  Interactive Simulator
-                </a>
-              </li>
-              <li>
-                <a href="#how-it-works" className="transition hover:text-foreground">
-                  How It Works
-                </a>
-              </li>
-              <li>
-                <a href="#features" className="transition hover:text-foreground">
-                  Features for SMBs
-                </a>
-              </li>
-              <li>
-                <a href="#comparison" className="transition hover:text-foreground">
-                  Ihsaab vs QuickBooks
-                </a>
-              </li>
-              <li>
-                <a href="#pricing" className="transition hover:text-foreground">
-                  Pricing ($100/mo or $1000/yr)
-                </a>
-              </li>
+              {footerContent.productLinks.map((link) => <li key={link.href}><a href={link.href} className="transition hover:text-foreground">{link.label}</a></li>)}
             </ul>
           </div>
 
           {/* Security & Legal */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
-              Get Started
+              {footerContent.startHeading}
             </h4>
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-              <li>
-                <Link to="/auth/sign-up" className="transition hover:text-foreground">
-                  Create Free Account
-                </Link>
-              </li>
-              <li>
-                <Link to="/auth/sign-in" className="transition hover:text-foreground">
-                  Sign In
-                </Link>
-              </li>
-              <li>
-                <a href="#faq" className="transition hover:text-foreground">
-                  FAQ & Support
-                </a>
-              </li>
+              {footerContent.startLinks.map((link) => <li key={link.href}>{link.internal ? <Link to={link.href} className="transition hover:text-foreground">{link.label}</Link> : <a href={link.href} className="transition hover:text-foreground">{link.label}</a>}</li>)}
               <li>
                 <span className="text-xs text-muted-foreground/80">
-                  GAAP & IFRS Compliant
+                  {footerContent.compliance}
                 </span>
               </li>
             </ul>
@@ -93,13 +55,9 @@ export function Footer() {
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border/60 pt-6 text-xs text-muted-foreground sm:flex-row">
-          <p>© {currentYear} Ihsaab Inc. Built for small business owners worldwide.</p>
+          <p>© {currentYear} {footerContent.copyright}</p>
           <div className="flex gap-4">
-            <span className="hover:text-foreground cursor-pointer">Privacy Policy</span>
-            <span>•</span>
-            <span className="hover:text-foreground cursor-pointer">Terms of Service</span>
-            <span>•</span>
-            <span className="hover:text-foreground cursor-pointer">Security</span>
+            {footerContent.legalLinks.map((label, index) => <span key={label} className="contents">{index > 0 && <span>•</span>}<span className="hover:text-foreground cursor-pointer">{label}</span></span>)}
           </div>
         </div>
       </div>

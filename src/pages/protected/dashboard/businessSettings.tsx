@@ -3,21 +3,10 @@ import { useParams, useNavigate } from "react-router";
 import { useAuth } from "../../../auth/authProvider";
 import supabase from "../../../lib/supabase";
 import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
-import {
-  Field,
-  FieldLabel,
-  FieldDescription,
-  FieldGroup,
-  FieldSet,
-} from "../../../components/ui/field";
-import { Separator } from "../../../components/ui/separator";
+import { BusinessDetailsForm } from "./BusinessDetailsForm";
+import { BusinessDangerZone } from "./BusinessDangerZone";
 import { toast } from "../../../components/ui/toast";
 import {
-  Lock,
-  Trash2,
-  Save,
-  AlertTriangle,
   Loader2,
   Copy,
   Check,
@@ -254,288 +243,21 @@ export default function BusinessSettingsPage() {
         </div>
       </div>
 
-      {/* Main Settings Form */}
-      <form onSubmit={handleSave} className="space-y-6">
-        <div className="border-border/80 bg-card rounded-3xl border p-6 shadow-xs sm:p-8">
-          <h3 className="text-foreground mb-4 text-base font-bold">
-            General Business Details
-          </h3>
+      <BusinessDetailsForm
+        name={name} setName={setName} country={country} currency={currency}
+        taxId={taxId} setTaxId={setTaxId} registrationNumber={registrationNumber}
+        setRegistrationNumber={setRegistrationNumber} address={address} setAddress={setAddress}
+        contactEmail={contactEmail} setContactEmail={setContactEmail} phone={phone} setPhone={setPhone}
+        isSaving={isSaving} onSave={handleSave}
+      />
 
-          <FieldSet>
-            <FieldGroup>
-              {/* Business Name (Editable) */}
-              <Field>
-                <FieldLabel htmlFor="biz-name">
-                  Business Legal / Trading Name *
-                </FieldLabel>
-                <Input
-                  id="biz-name"
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Apex Studio, Al-Noor Cafe"
-                />
-                <FieldDescription>
-                  This name appears on invoices, account ledgers, and financial
-                  exports.
-                </FieldDescription>
-              </Field>
-
-              {/* Country (Read-only) */}
-              <Field>
-                <div className="flex items-center justify-between">
-                  <FieldLabel htmlFor="biz-country">
-                    Country / Tax Jurisdiction
-                  </FieldLabel>
-                  <span className="text-muted-foreground flex items-center gap-1 text-[11px] font-medium">
-                    <Lock className="size-3" /> Not editable
-                  </span>
-                </div>
-                <Input
-                  id="biz-country"
-                  type="text"
-                  disabled
-                  value={country}
-                  className="bg-muted/50 cursor-not-allowed opacity-80"
-                />
-                <FieldDescription>
-                  Tax jurisdiction is fixed to your initial setup to preserve
-                  legal and regulatory compliance.
-                </FieldDescription>
-              </Field>
-
-              {/* Operating Currency (Read-only) */}
-              <Field>
-                <div className="flex items-center justify-between">
-                  <FieldLabel htmlFor="biz-currency">
-                    Base Operating Currency
-                  </FieldLabel>
-                  <span className="text-muted-foreground flex items-center gap-1 text-[11px] font-medium">
-                    <Lock className="size-3" /> Not editable
-                  </span>
-                </div>
-                <Input
-                  id="biz-currency"
-                  type="text"
-                  disabled
-                  value={currency}
-                  className="bg-muted/50 cursor-not-allowed font-mono font-semibold opacity-80"
-                />
-                <FieldDescription>
-                  Base currency cannot be changed once transactions and ledgers
-                  are initialized.
-                </FieldDescription>
-              </Field>
-            </FieldGroup>
-          </FieldSet>
-
-          <Separator className="my-6" />
-
-          <h3 className="text-foreground mb-4 text-base font-bold">
-            Tax & Legal Identification
-          </h3>
-
-          <FieldSet>
-            <FieldGroup>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {/* Tax ID / VAT / GSTIN */}
-                <Field>
-                  <FieldLabel htmlFor="tax-id">
-                    Tax ID / VAT / GSTIN Number
-                  </FieldLabel>
-                  <Input
-                    id="tax-id"
-                    type="text"
-                    value={taxId}
-                    onChange={(e) => setTaxId(e.target.value)}
-                    placeholder="e.g. 300123456700003"
-                  />
-                  <FieldDescription>
-                    Printed on your tax invoices.
-                  </FieldDescription>
-                </Field>
-
-                {/* Company Registration (CR) */}
-                <Field>
-                  <FieldLabel htmlFor="reg-num">
-                    Commercial Registration (CR)
-                  </FieldLabel>
-                  <Input
-                    id="reg-num"
-                    type="text"
-                    value={registrationNumber}
-                    onChange={(e) => setRegistrationNumber(e.target.value)}
-                    placeholder="e.g. 1010123456"
-                  />
-                  <FieldDescription>
-                    Official registration identifier.
-                  </FieldDescription>
-                </Field>
-              </div>
-
-              {/* Operating Address */}
-              <Field>
-                <FieldLabel htmlFor="address">
-                  Registered Business Address
-                </FieldLabel>
-                <Input
-                  id="address"
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Street, City, Postal Code"
-                />
-              </Field>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {/* Contact Email */}
-                <Field>
-                  <FieldLabel htmlFor="contact-email">
-                    Invoicing & Receipt Email
-                  </FieldLabel>
-                  <Input
-                    id="contact-email"
-                    type="email"
-                    value={contactEmail}
-                    onChange={(e) => setContactEmail(e.target.value)}
-                    placeholder="billing@yourbusiness.com"
-                  />
-                </Field>
-
-                {/* Phone */}
-                <Field>
-                  <FieldLabel htmlFor="phone">Business Phone Number</FieldLabel>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+966 50 123 4567"
-                  />
-                </Field>
-              </div>
-            </FieldGroup>
-          </FieldSet>
-
-          <div className="mt-6 flex justify-end">
-            <Button type="submit" disabled={isSaving} className="gap-2">
-              {isSaving ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <>
-                  <Save className="size-4" />
-                  <span>Save Configuration</span>
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      </form>
-
-      {/* Danger Zone: Delete Business */}
-      <div className="border-destructive/30 bg-destructive/5 rounded-3xl border p-6 sm:p-8">
-        <div className="flex items-start gap-4">
-          <div className="bg-destructive/15 text-destructive flex size-10 shrink-0 items-center justify-center rounded-2xl">
-            <AlertTriangle className="size-5" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-destructive text-base font-bold">
-              Danger Zone: Delete Business
-            </h3>
-            <p className="text-muted-foreground mt-1 text-xs leading-relaxed sm:text-sm">
-              Permanently delete{" "}
-              <strong className="text-foreground">{name}</strong> along with all
-              associated accounts, double-entry journals, transaction history,
-              and financial statements. This action is irreversible.
-            </p>
-
-            <div className="mt-4">
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={() => {
-                  setConfirmDeleteText("");
-                  setShowDeleteModal(true);
-                }}
-                className="gap-1.5"
-              >
-                <Trash2 className="size-3.5" />
-                <span>Delete This Business</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
-          <div className="border-border bg-card w-full max-w-md rounded-3xl border p-6 shadow-2xl">
-            <div className="border-border text-destructive flex items-center gap-3 border-b pb-3.5">
-              <div className="bg-destructive/10 flex size-8 items-center justify-center rounded-xl">
-                <AlertTriangle className="size-4" />
-              </div>
-              <h4 className="text-base font-bold">Confirm Business Deletion</h4>
-            </div>
-
-            <div className="text-muted-foreground mt-4 space-y-3 text-xs leading-relaxed">
-              <p>
-                Are you absolutely sure you want to delete{" "}
-                <strong className="text-foreground">{name}</strong>? All
-                accounts and records will be immediately erased.
-              </p>
-              <p>
-                Please type{" "}
-                <strong className="text-foreground font-mono">{name}</strong>{" "}
-                below to confirm:
-              </p>
-
-              <Input
-                type="text"
-                value={confirmDeleteText}
-                onChange={(e) => setConfirmDeleteText(e.target.value)}
-                placeholder={name}
-                className="mt-2 text-sm"
-              />
-            </div>
-
-            <div className="mt-6 flex items-center justify-end gap-2.5">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setShowDeleteModal(false)}
-              >
-                Cancel
-              </Button>
-
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                disabled={
-                  confirmDeleteText.trim() !== name.trim() || isDeleting
-                }
-                onClick={handleDeleteBusiness}
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 className="size-3.5 animate-spin" />
-                    <span>Deleting...</span>
-                  </>
-                ) : (
-                  <span>I understand, delete business</span>
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <BusinessDangerZone
+        name={name} confirmDeleteText={confirmDeleteText}
+        onConfirmDeleteTextChange={setConfirmDeleteText} isDeleting={isDeleting}
+        showDeleteModal={showDeleteModal} setShowDeleteModal={setShowDeleteModal}
+        onOpen={() => { setConfirmDeleteText(""); setShowDeleteModal(true) }}
+        onDelete={handleDeleteBusiness}
+      />
     </div>
   );
 }

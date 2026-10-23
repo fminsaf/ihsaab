@@ -1,57 +1,19 @@
 import { Check, X, Sparkles } from "lucide-react";
+import { comparisonContent } from "../../data/landingContent";
 
 export function ComparisonSection() {
-  const comparisonRows = [
-    {
-      feature: "Accounting Learning Curve",
-      traditional: "Requires courses or accounting background",
-      spreadsheets: "Requires custom formulas and accounting skills",
-      ihsaab: "Zero learning curve: write what happened",
-    },
-    {
-      feature: "Data Entry Experience",
-      traditional: "Tedious journal codes, debit & credit columns",
-      spreadsheets: "Manual entry prone to broken cell links",
-      ihsaab: "Plain business description + amount",
-    },
-    {
-      feature: "Double-Entry Book Balancing",
-      traditional: "Manual reconciliation; easy to be out of balance",
-      spreadsheets: "No automatic balancing mechanism",
-      ihsaab: "100% automated & mathematically verified",
-    },
-    {
-      feature: "Tax Preparation & Reserves",
-      traditional: "Chaotic calculation at year-end",
-      spreadsheets: "Manual guessing and formula errors",
-      ihsaab: "Automatic tax vault reservation per transaction",
-    },
-    {
-      feature: "Time Spent per Week",
-      traditional: "4 - 8 hours of reconciliation headaches",
-      spreadsheets: "5+ hours of formula maintenance",
-      ihsaab: "Under 10 minutes (just create an entry!)",
-    },
-    {
-      feature: "CPA / Accountant Export",
-      traditional: "Messy adjustments needed",
-      spreadsheets: "Accountants charge extra to clean up",
-      ihsaab: "Instant, standard GAAP financial statements",
-    },
-  ];
-
   return (
     <section id="comparison" className="border-t border-border/60 py-20 bg-muted/20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-xs font-bold uppercase tracking-widest text-primary">
-            The Difference
+            {comparisonContent.eyebrow}
           </span>
           <h2 className="mt-2 text-3xl font-black tracking-tight text-foreground sm:text-4xl">
-            Why SMBs are leaving old accounting behind.
+            {comparisonContent.title}
           </h2>
           <p className="mt-3 text-base text-muted-foreground">
-            See how Ihsaab compares to legacy software and fragile spreadsheets.
+            {comparisonContent.description}
           </p>
         </div>
 
@@ -82,7 +44,7 @@ export function ComparisonSection() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
-                {comparisonRows.map((row, index) => (
+                {comparisonContent.rows.map((row, index) => (
                   <tr
                     key={index}
                     className="transition hover:bg-muted/30"

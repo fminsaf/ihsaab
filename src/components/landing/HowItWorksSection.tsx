@@ -1,57 +1,23 @@
-import { PlusCircle, Cpu, FileCheck } from "lucide-react";
+import { howItWorksContent } from "../../data/landingContent";
 
 export function HowItWorksSection() {
-  const steps = [
-    {
-      number: "01",
-      title: "Record What Happened",
-      subtitle: "Just describe the transaction in plain human English",
-      description:
-        "Forget chart of accounts, debit/credit rules, or ledger codes. When you make a sale or pay an invoice, just record the amount and what it was for.",
-      icon: PlusCircle,
-      badge: "No accounting jargon",
-      visualText: "Sold 10 artisan ceramics for $450 via card",
-    },
-    {
-      number: "02",
-      title: "Ihsaab Autopilots the Books",
-      subtitle: "The engine runs double-entry accounting in the background",
-      description:
-        "Ihsaab maps the entry to GAAP-compliant journal entries, splits sales tax or VAT into your tax reserve, balances your ledger, and recalculates cash flow in milliseconds.",
-      icon: Cpu,
-      badge: "Double-entry in 0.02s",
-      visualText: "Dr. Operating Cash $450 | Cr. Retail Sales $405 | Tax $45",
-    },
-    {
-      number: "03",
-      title: "Flawless Financials on Demand",
-      subtitle: "Instant P&L, balance sheets, and tax-ready summaries",
-      description:
-        "Always know your real profit margin and cash runway. When tax season arrives, send a clean, audit-proof export directly to your accountant with a single click.",
-      icon: FileCheck,
-      badge: "CPA & Tax Ready",
-      visualText: "Profit: $13,420 • Margin: 62% • Tax Reserve: $1,340",
-    },
-  ];
-
   return (
     <section id="how-it-works" className="border-t border-border/60 py-20 bg-muted/20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-xs font-bold uppercase tracking-widest text-primary">
-            How It Works
+            {howItWorksContent.eyebrow}
           </span>
           <h2 className="mt-2 text-3xl font-black tracking-tight text-foreground sm:text-4xl">
-            Accounting without the headache.
+            {howItWorksContent.title}
           </h2>
           <p className="mt-3 text-base text-muted-foreground">
-            Traditional software forces you to learn accounting. Ihsaab is designed so
-            you never have to.
+            {howItWorksContent.description}
           </p>
         </div>
 
         <div className="mt-14 grid gap-8 md:grid-cols-3">
-          {steps.map((step) => {
+          {howItWorksContent.steps.map((step) => {
             const Icon = step.icon;
             return (
               <div
@@ -85,7 +51,7 @@ export function HowItWorksSection() {
 
                 <div className="mt-6 rounded-2xl border border-border/80 bg-muted/40 p-3 font-mono text-xs text-foreground">
                   <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1">
-                    What happens:
+                    {howItWorksContent.whatHappens}
                   </div>
                   <div className="truncate text-foreground/90 font-medium">{step.visualText}</div>
                 </div>

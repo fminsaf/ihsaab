@@ -9,11 +9,12 @@ interface PostingLine { account_code: string; debit: number; credit: number }
 interface Transaction { id: string; type: string; amount: number; category: string | null; description: string | null; created_at: string; date: string | null; ledger_lines: PostingLine[] | null }
 type Account = (typeof LEDGER_ACCOUNTS)[number]
 interface Context { bid: string; currentBusinessName: string; currentBusinessCurrency?: string }
-type StatementKind = "profit-loss" | "balance-sheet" | "cash-flow"
+type StatementKind = "profit-loss" | "balance-sheet" | "cash-flow" | "trial-balance"
 const STATEMENTS: { id: StatementKind; title: string }[] = [
   { id: "profit-loss", title: "Profit & loss" },
   { id: "balance-sheet", title: "Balance sheet" },
   { id: "cash-flow", title: "Cash flow" },
+  { id: "trial-balance", title: "Trial balance" },
 ]
 
 export default function StatementsPage() {
@@ -71,6 +72,12 @@ export default function StatementsPage() {
     const movement = balanceLines.filter((line) => line.account_code === account.code).reduce((sum, line) => sum + Number(line.debit || 0) - Number(line.credit || 0), 0)
     return account.category === "asset" ? movement : -movement
   }
+  const trialRows = accounts.map((account) => {
+    const movement = balanceLines.filter((line) => line.account_code === account.code).reduce((sum, line) => sum + Number(line.debit || 0) - Number(line.credit || 0), 0)
+    return { account, debit: Math.max(account.category === "asset" || account.category === "expense" ? movement : -movement, 0), credit: Math.max(account.category === "asset" || account.category === "expense" ? -movement : movement, 0) }
+  }).filter((row) => row.debit > 0.0001 || row.credit > 0.0001)
+  const trialDebit = trialRows.reduce((sum, row) => sum + row.debit, 0)
+  const trialCredit = trialRows.reduce((sum, row) => sum + row.credit, 0)
   const assets = accountsBy("asset").reduce((sum, row) => sum + balanceFor(row), 0)
   const liabilities = accountsBy("liability").reduce((sum, row) => sum + balanceFor(row), 0)
   const equity = accountsBy("equity").reduce((sum, row) => sum + balanceFor(row), 0) + balanceNetIncome
@@ -94,6 +101,7 @@ export default function StatementsPage() {
       {kind === "profit-loss" && <div className="mx-auto max-w-2xl space-y-7"><section><h2 className="mb-2 text-sm font-bold uppercase tracking-wide">Revenue</h2>{statementRevenueRows.length ? statementRevenueRows.map((row) => <Row key={row.category} label={row.category} value={row.amount} />) : <p className="py-2 text-sm text-muted-foreground">No revenue recorded in this period.</p>}<Row label="Total revenue" value={revenue} strong /></section><section><h2 className="mb-2 text-sm font-bold uppercase tracking-wide">Expenses</h2>{statementExpenseRows.length ? statementExpenseRows.map((row) => <Row key={row.category} label={row.category} value={row.amount} />) : <p className="py-2 text-sm text-muted-foreground">No expenses recorded in this period.</p>}<Row label="Total expenses" value={expenses} strong /></section><Row label="Net income" value={netIncome} strong /></div>}
       {kind === "balance-sheet" && <div className="mx-auto max-w-2xl space-y-7"><section><h2 className="mb-2 text-sm font-bold uppercase tracking-wide">Assets</h2><AccountRows category="asset" /><Row label="Total assets" value={assets} strong /></section><section><h2 className="mb-2 text-sm font-bold uppercase tracking-wide">Liabilities</h2><AccountRows category="liability" /><Row label="Total liabilities" value={liabilities} strong /></section><section><h2 className="mb-2 text-sm font-bold uppercase tracking-wide">Equity</h2><AccountRows category="equity" /><Row label="Accumulated net income" value={balanceNetIncome} /><Row label="Total equity" value={equity} strong /></section><Row label="Liabilities and equity" value={liabilities + equity} strong /></div>}
       {kind === "cash-flow" && <div className="mx-auto max-w-2xl space-y-7"><section><h2 className="mb-2 text-sm font-bold uppercase tracking-wide">Cash received</h2><Row label="Recorded income and customer payments" value={cashIn} /><Row label="Total cash received" value={cashIn} strong /></section><section><h2 className="mb-2 text-sm font-bold uppercase tracking-wide">Cash paid</h2><Row label="Recorded paid expenses and purchases" value={cashOut} /><Row label="Total cash paid" value={cashOut} strong /></section><Row label="Net cash activity" value={cashNet} strong /><p className="rounded-xl border border-border bg-muted/30 p-3 text-xs text-muted-foreground print:border-black print:bg-white print:text-black">Unpaid sales and purchases are excluded where their payment status is recorded. Older transactions without payment details are treated as cash activity.</p></div>}
+      {kind === "trial-balance" && <div className="mx-auto max-w-3xl"><p className="mb-4 text-sm text-muted-foreground">Account balances as of {new Date(to).toLocaleDateString()} · {Math.abs(trialDebit - trialCredit) < 0.01 ? "Debits equal credits" : "Debits and credits do not balance"}</p><div className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)_minmax(0,0.7fr)] border-b border-border pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"><span>Ledger</span><span className="text-right">Debit</span><span className="text-right">Credit</span></div><div className="divide-y divide-border">{trialRows.map(({ account, debit, credit }) => <div key={account.code} className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)_minmax(0,0.7fr)] gap-2 py-2.5 text-sm"><span className="min-w-0"><span className="block truncate">{account.name}</span><span className="text-xs capitalize text-muted-foreground">{account.category}</span></span><span className="break-words text-right tabular-nums">{debit ? format(debit) : "—"}</span><span className="break-words text-right tabular-nums">{credit ? format(credit) : "—"}</span></div>)}</div><div className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)_minmax(0,0.7fr)] gap-2 border-t border-border pt-3 text-sm font-bold"><span>Total</span><span className="text-right tabular-nums">{format(trialDebit)}</span><span className="text-right tabular-nums">{format(trialCredit)}</span></div></div>}
       <footer className="mt-12 border-t border-border pt-4 text-center text-[10px] text-muted-foreground print:border-black print:text-black">Generated from records in {currentBusinessName} · {new Date().toLocaleString()}</footer>
     </article>}
     <p className="no-print text-xs text-muted-foreground"><Printer className="mr-1 inline size-3" />Export opens your browser print dialog. Choose “Save as PDF” to download an A4 file.</p>

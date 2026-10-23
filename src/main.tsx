@@ -21,9 +21,11 @@ import BusinessSettingsPage from "./pages/protected/dashboard/businessSettings";
 import AccountSettingsPage from "./pages/protected/dashboard/accountSettings";
 import InventoryPage from "./pages/protected/dashboard/inventory";
 import { Toaster } from "./components/ui/toast";
+import { ThemeProvider } from "./theme/ThemeProvider";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
+    <ThemeProvider>
     <AuthProvider>
       <BrowserRouter>
         <Routes>
@@ -56,5 +58,6 @@ createRoot(document.getElementById("root")!).render(
     </AuthProvider>
 
     <Toaster />
+    </ThemeProvider>
   </StrictMode>,
 );

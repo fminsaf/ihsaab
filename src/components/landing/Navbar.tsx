@@ -1,18 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { Menu, X, Sparkles, ArrowRight } from "lucide-react";
+import { navbarContent } from "../../data/landingContent";
+import { ThemeToggle } from "../ThemeToggle";
 
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const navLinks = [
-    { label: "Interactive Demo", href: "#demo" },
-    { label: "How It Works", href: "#how-it-works" },
-    { label: "Features", href: "#features" },
-    { label: "Comparison", href: "#comparison" },
-    { label: "Pricing", href: "#pricing" },
-    { label: "FAQ", href: "#faq" },
-  ];
 
   return (
     <header className="border-border/60 bg-background/80 sticky top-0 z-50 w-full border-b backdrop-blur-md transition-colors">
@@ -27,14 +20,14 @@ export function Navbar() {
               Ihsaab
             </span>
             <span className="text-muted-foreground hidden text-[10px] font-medium tracking-wide sm:inline-block">
-              Accounting on Autopilot
+              {navbarContent.tagline}
             </span>
           </div>
         </Link>
 
         {/* Desktop Navigation Links */}
         <nav className="hidden items-center gap-6 md:flex">
-          {navLinks.map((link) => (
+          {navbarContent.links.map((link) => (
             <a
               key={link.label}
               href={link.href}
@@ -47,29 +40,31 @@ export function Navbar() {
 
         {/* Desktop CTAs */}
         <div className="hidden items-center gap-3 md:flex">
+          <ThemeToggle />
           <Link
             to="/auth/sign-in"
             className="text-muted-foreground hover:text-foreground rounded-full px-4 py-2 text-sm font-medium transition-colors"
           >
-            Sign In
+            {navbarContent.signIn}
           </Link>
           <Link
             to="/auth/sign-up"
             className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-semibold shadow-sm transition-all duration-200 hover:scale-[1.02]"
           >
-            <span>Get Started</span>
+            <span>{navbarContent.desktopAction}</span>
             <ArrowRight className="size-3.5" />
           </Link>
         </div>
 
         {/* Mobile Menu Button */}
         <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle />
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="text-foreground hover:bg-muted inline-flex items-center justify-center rounded-full p-2.5 focus:outline-none"
             aria-expanded={mobileMenuOpen}
-            aria-label="Toggle navigation menu"
+            aria-label={navbarContent.menuLabel}
           >
             {mobileMenuOpen ? (
               <X className="size-6" />
@@ -84,7 +79,7 @@ export function Navbar() {
       {mobileMenuOpen && (
         <div className="border-border bg-background border-b px-4 pt-2 pb-6 md:hidden">
           <div className="flex flex-col space-y-2 py-2">
-            {navLinks.map((link) => (
+            {navbarContent.links.map((link) => (
               <a
                 key={link.label}
                 href={link.href}
@@ -97,19 +92,22 @@ export function Navbar() {
           </div>
 
           <div className="border-border mt-4 flex flex-col gap-2.5 border-t pt-4">
+            <div className="flex justify-center">
+              <ThemeToggle />
+            </div>
             <Link
               to="/auth/sign-in"
               onClick={() => setMobileMenuOpen(false)}
               className="border-border text-foreground hover:bg-muted w-full rounded-full border px-4 py-2.5 text-center text-sm font-medium"
             >
-              Sign In
+              {navbarContent.signIn}
             </Link>
             <Link
               to="/auth/sign-up"
               onClick={() => setMobileMenuOpen(false)}
               className="bg-primary text-primary-foreground hover:bg-primary/90 flex w-full items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-center text-sm font-semibold shadow"
             >
-              <span>Get Started Free</span>
+              <span>{navbarContent.mobileAction}</span>
               <ArrowRight className="size-4" />
             </Link>
           </div>
