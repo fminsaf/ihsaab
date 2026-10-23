@@ -18,6 +18,7 @@ import {
   ArrowLeftRight,
   Users,
   BookOpen,
+  Boxes,
   FileSpreadsheet,
   Building2,
   User as UserIcon,
@@ -49,6 +50,7 @@ export default function BusinessDashboardLayout() {
   const [businesses, setBusinesses] = useState<BusinessOption[]>([]);
   const [currentBusinessName, setCurrentBusinessName] =
     useState<string>("My Business");
+  const [currentBusinessCurrency, setCurrentBusinessCurrency] = useState("USD");
   const [newEntryOpen, setNewEntryOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -95,8 +97,10 @@ export default function BusinessDashboardLayout() {
           const found = data.find((b) => b.id === bid);
           if (found) {
             setCurrentBusinessName(found.name);
+            if (found.currency) setCurrentBusinessCurrency(found.currency);
           } else if (bid) {
             setCurrentBusinessName(data[0].name);
+            if (data[0].currency) setCurrentBusinessCurrency(data[0].currency);
           }
         } else {
           setBusinesses([{ id: bid || "default", name: "My Business" }]);
@@ -125,6 +129,7 @@ export default function BusinessDashboardLayout() {
   const handleSelectBusiness = (b: BusinessOption) => {
     setSwitcherOpen(false);
     setCurrentBusinessName(b.name);
+    setCurrentBusinessCurrency(b.currency || "USD");
     // Keep relative route suffix if applicable, or go to root of business
     const suffix = location.pathname.split(`/b/${bid}`)[1] || "";
     navigate(`/b/${b.id}${suffix}`);
@@ -169,10 +174,16 @@ export default function BusinessDashboardLayout() {
       icon: Users,
     },
     {
-      name: "Books",
-      href: `/b/${bid}/books`,
+      name: "Ledgers",
+      href: `/b/${bid}/ledgers`,
       exact: false,
       icon: BookOpen,
+    },
+    {
+      name: "Inventory",
+      href: `/b/${bid}/inventory`,
+      exact: false,
+      icon: Boxes,
     },
     {
       name: "Financial Statements",
@@ -195,8 +206,8 @@ export default function BusinessDashboardLayout() {
   const isOverview =
     currentPath === `/b/${bid}` || currentPath === `/b/${bid}/`;
   const isTransactions = currentPath.startsWith(`/b/${bid}/transactions`);
-  const isBooks = currentPath.startsWith(`/b/${bid}/books`);
-  const showNewEntryButton = isOverview || isTransactions || isBooks;
+  const isLedgers = currentPath.startsWith(`/b/${bid}/ledgers`);
+  const showNewEntryButton = isOverview || isTransactions || isLedgers;
 
   // Header Title & Description
   const getHeaderInfo = () => {
@@ -224,10 +235,16 @@ export default function BusinessDashboardLayout() {
         description: "Manage customers and vendors, and see their transactions.",
       };
     }
-    if (currentPath.startsWith(`/b/${bid}/books`)) {
+    if (isLedgers) {
       return {
-        title: "Books & Chart of Accounts",
-        description: "Chart of accounts and general ledger balances.",
+        title: "Ledgers",
+        description: "Review ledger activity and make sure debits equal credits.",
+      };
+    }
+    if (currentPath.startsWith(`/b/${bid}/inventory`)) {
+      return {
+        title: "Inventory",
+        description: "Manage products, stock, and item prices.",
       };
     }
     if (currentPath.startsWith(`/b/${bid}/statements`)) {
@@ -520,7 +537,7 @@ export default function BusinessDashboardLayout() {
 
         {/* Sub-page Outlet */}
         <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <Outlet context={{ bid, currentBusinessName, setNewEntryOpen }} />
+          <Outlet context={{ bid, currentBusinessName, currentBusinessCurrency, setNewEntryOpen }} />
         </main>
       </div>
 

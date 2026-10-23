@@ -128,3 +128,33 @@
     @apply font-sans;
     }
 }
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .financial-statement,
+  .financial-statement * {
+    visibility: visible !important;
+  }
+
+  .financial-statement {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    width: 182mm !important;
+    min-height: 269mm;
+    color: #111 !important;
+    background: #fff !important;
+    font-size: 10pt !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

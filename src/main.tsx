@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import { BrowserRouter, Route, Routes } from "react-router";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import LandingPage from "./pages/landingPage";
 import NotFoundPage from "./pages/404";
 import AuthLayout from "./pages/auth/layout";
@@ -15,10 +15,11 @@ import OverviewPage from "./pages/protected/dashboard/overview";
 import ChartsPage from "./pages/protected/dashboard/charts";
 import TransactionsPage from "./pages/protected/dashboard/transactions";
 import ContactsPage from "./pages/protected/dashboard/contacts";
-import BooksPage from "./pages/protected/dashboard/books";
+import LedgersPage from "./pages/protected/dashboard/ledgers";
 import StatementsPage from "./pages/protected/dashboard/statements";
 import BusinessSettingsPage from "./pages/protected/dashboard/businessSettings";
 import AccountSettingsPage from "./pages/protected/dashboard/accountSettings";
+import InventoryPage from "./pages/protected/dashboard/inventory";
 import { Toaster } from "./components/ui/toast";
 
 createRoot(document.getElementById("root")!).render(
@@ -35,7 +36,9 @@ createRoot(document.getElementById("root")!).render(
               <Route path="charts" element={<ChartsPage />} />
               <Route path="transactions" element={<TransactionsPage />} />
               <Route path="contacts" element={<ContactsPage />} />
-              <Route path="books" element={<BooksPage />} />
+              <Route path="ledgers" element={<LedgersPage />} />
+              <Route path="books" element={<Navigate to="../ledgers" replace />} />
+              <Route path="inventory" element={<InventoryPage />} />
               <Route path="statements" element={<StatementsPage />} />
               <Route path="settings" element={<BusinessSettingsPage />} />
               <Route path="account" element={<AccountSettingsPage />} />

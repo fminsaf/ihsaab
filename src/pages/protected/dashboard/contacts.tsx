@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useOutletContext } from "react-router"
-import { Building2, Mail, Phone, Plus, Search, Users, X } from "lucide-react"
+import { Building2, Mail, Phone, Plus, Search, Trash2, Users, X } from "lucide-react"
 import supabase from "../../../lib/supabase"
 import { Button } from "../../../components/ui/button"
 import { Input } from "../../../components/ui/input"
@@ -23,6 +23,7 @@ interface Transaction {
   description: string | null
   category: string | null
   created_at: string
+  date?: string | null
 }
 interface OutletCtx { bid: string }
 
@@ -35,6 +36,8 @@ export default function ContactsPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [form, setForm] = useState({ name: "", email: "", phone: "", company_name: "", notes: "" })
 
   const fetchContacts = useCallback(async () => {
@@ -53,7 +56,7 @@ export default function ContactsPage() {
     let active = true
     async function loadTransactions() {
       if (!selected) { setTransactions([]); return }
-      const { data, error } = await supabase.from("transactions").select("id, type, amount, description, category, created_at").eq("business_id", bid).eq("contact_id", selected.id).order("created_at", { ascending: false })
+      const { data, error } = await supabase.from("transactions").select("id, type, amount, description, category, created_at, date").eq("business_id", bid).eq("contact_id", selected.id).order("created_at", { ascending: false })
       if (!active) return
       if (error) {
         setTransactions([])
@@ -86,6 +89,23 @@ export default function ContactsPage() {
     toast.add({ description: "Contact created.", type: "success" })
   }
 
+  async function deleteContact() {
+    if (!selected || deleting) return
+    setDeleting(true)
+    const { error } = await supabase.from("contacts").delete().eq("id", selected.id).eq("business_id", bid)
+    setDeleting(false)
+    if (error) {
+      toast.add({ description: error.message, type: "error" })
+      return
+    }
+    const remaining = contacts.filter((contact) => contact.id !== selected.id)
+    setContacts(remaining)
+    setSelected(remaining[0] ?? null)
+    setTransactions([])
+    setDeleteOpen(false)
+    toast.add({ description: "Contact deleted.", type: "success" })
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -113,6 +133,7 @@ export default function ContactsPage() {
           {selected ? <>
             <div className="flex items-start justify-between gap-3 border-b border-border pb-5">
               <div className="flex min-w-0 items-center gap-3"><span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Building2 className="size-5" /></span><div className="min-w-0"><h3 className="truncate text-lg font-bold">{selected.name}</h3><p className="text-sm text-muted-foreground">{selected.company_name || "Contact details"}</p></div></div>
+              <Button variant="destructive" size="sm" className="gap-2" onClick={() => setDeleteOpen(true)}><Trash2 className="size-4" />Delete</Button>
             </div>
             <div className="flex flex-wrap gap-x-5 gap-y-2 border-b border-border py-4 text-sm text-muted-foreground">
               {selected.email && <a className="inline-flex items-center gap-2 hover:text-foreground" href={`mailto:${selected.email}`}><Mail className="size-4" />{selected.email}</a>}
@@ -121,7 +142,7 @@ export default function ContactsPage() {
             </div>
             {selected.notes && <p className="border-b border-border py-4 text-sm text-muted-foreground">{selected.notes}</p>}
             <div className="pt-5"><div className="mb-4 flex items-center justify-between"><h4 className="font-semibold">Transaction history</h4><span className="text-xs text-muted-foreground">{transactions.length} record{transactions.length === 1 ? "" : "s"}</span></div>
-              {transactions.length ? <div className="space-y-2">{transactions.map((tx) => <div key={tx.id} className="flex items-center gap-3 rounded-xl border border-border px-3 py-3"><span className={`size-2 shrink-0 rounded-full ${tx.type === "income" ? "bg-emerald-500" : tx.type === "expense" ? "bg-red-500" : "bg-blue-500"}`} /><div className="min-w-0 flex-1"><p className="text-sm font-medium capitalize">{tx.type}</p><p className="truncate text-xs text-muted-foreground">{tx.description || tx.category || "Transaction"}</p></div><div className="text-right"><p className="text-sm font-semibold">{Number(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p><p className="text-xs text-muted-foreground">{new Date(tx.created_at).toLocaleDateString()}</p></div></div>)}</div> : <div className="rounded-xl border border-dashed border-border p-8 text-center"><p className="text-sm font-medium">No linked transactions yet</p><p className="mt-1 text-xs text-muted-foreground">Select this contact when recording a new transaction.</p></div>}
+              {transactions.length ? <div className="space-y-2">{transactions.map((tx) => <div key={tx.id} className="flex items-center gap-3 rounded-xl border border-border px-3 py-3"><span className={`size-2 shrink-0 rounded-full ${tx.type === "income" ? "bg-emerald-500" : tx.type === "expense" ? "bg-red-500" : "bg-blue-500"}`} /><div className="min-w-0 flex-1"><p className="text-sm font-medium capitalize">{tx.type}</p><p className="truncate text-xs text-muted-foreground">{tx.description || tx.category || "Transaction"}</p></div><div className="text-right"><p className="text-sm font-semibold">{Number(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p><p className="text-xs text-muted-foreground">{new Date(tx.date || tx.created_at).toLocaleDateString()}</p></div></div>)}</div> : <div className="rounded-xl border border-dashed border-border p-8 text-center"><p className="text-sm font-medium">No linked transactions yet</p><p className="mt-1 text-xs text-muted-foreground">Select this contact when recording a new transaction.</p></div>}
             </div>
           </> : <div className="flex h-full min-h-64 flex-col items-center justify-center text-center"><Users className="size-10 text-muted-foreground/50" /><h3 className="mt-3 font-semibold">Select a contact</h3><p className="mt-1 text-sm text-muted-foreground">Contact details and transaction history will appear here.</p></div>}
         </section>
@@ -136,6 +157,19 @@ export default function ContactsPage() {
             <div className="space-y-1.5"><Label htmlFor="contact-notes">Notes</Label><Input id="contact-notes" value={form.notes} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, notes: event.target.value })} /></div>
             <DialogFooter><Button type="button" variant="outline" onClick={() => setDialogOpen(false)}><X className="mr-1 size-4" />Cancel</Button><Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save contact"}</Button></DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteOpen} onOpenChange={(open) => !deleting && setDeleteOpen(open)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete {selected?.name}?</DialogTitle>
+            <DialogDescription>This removes the contact. Any linked transactions will remain, but will no longer be connected to this contact.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" disabled={deleting} onClick={() => setDeleteOpen(false)}>Cancel</Button>
+            <Button type="button" variant="destructive" disabled={deleting} onClick={() => void deleteContact()}>{deleting ? "Deleting…" : "Delete contact"}</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
