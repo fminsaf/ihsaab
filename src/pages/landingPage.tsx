@@ -7,8 +7,6 @@ import { HeroSection } from "../components/landing/HeroSection";
 import { HowItWorksSection } from "../components/landing/HowItWorksSection";
 import { FeaturesSection } from "../components/landing/FeaturesSection";
 import { ComparisonSection } from "../components/landing/ComparisonSection";
-import { PricingSection } from "../components/landing/PricingSection";
-import { RoiCalculator } from "../components/landing/RoiCalculator";
 import { FaqSection } from "../components/landing/FaqSection";
 import { CtaSection } from "../components/landing/CtaSection";
 import { Footer } from "../components/landing/Footer";
@@ -95,12 +93,6 @@ const LandingPage = () => {
 
         {/* Ihsaab vs QuickBooks & Spreadsheets Comparison */}
         <ComparisonSection />
-
-        {/* Pricing Section: $100/mo and $1,000/yr */}
-        <PricingSection />
-
-        {/* Interactive ROI & Time Saved Calculator */}
-        <RoiCalculator />
 
         {/* Frequently Asked Questions */}
         <FaqSection />

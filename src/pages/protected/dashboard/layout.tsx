@@ -1,16 +1,20 @@
 import { useEffect, useState, useRef } from "react";
 import { NewTransactionDialog } from "../../../components/transactions/NewTransactionDialog";
 import { DashboardSidebar, type BusinessOption } from "./DashboardSidebar";
-import {
-  useParams,
-  useNavigate,
-  useLocation,
-  Outlet,
-} from "react-router";
+import { useParams, useNavigate, useLocation, Outlet } from "react-router";
 import { useAuth } from "../../../auth/authProvider";
 import supabase from "../../../lib/supabase";
 import { toast } from "../../../components/ui/toast";
-import { Menu, LayoutDashboard, BarChart3, ArrowLeftRight, Users, BookOpen, Boxes, FileSpreadsheet } from "lucide-react";
+import {
+  Menu,
+  LayoutDashboard,
+  ArrowLeftRight,
+  Users,
+  BookOpen,
+  BookText,
+  Boxes,
+  FileSpreadsheet,
+} from "lucide-react";
 
 export default function BusinessDashboardLayout() {
   const { bid } = useParams<{ bid: string }>();
@@ -130,16 +134,28 @@ export default function BusinessDashboardLayout() {
       icon: LayoutDashboard,
     },
     {
-      name: "Charts",
-      href: `/b/${bid}/charts`,
-      exact: false,
-      icon: BarChart3,
-    },
-    {
       name: "Transactions",
       href: `/b/${bid}/transactions`,
       exact: false,
       icon: ArrowLeftRight,
+    },
+    {
+      name: "General Ledger",
+      href: `/b/${bid}/general-ledger`,
+      exact: false,
+      icon: BookText,
+    },
+    {
+      name: "Accounts",
+      href: `/b/${bid}/accounts`,
+      exact: false,
+      icon: BookOpen,
+    },
+    {
+      name: "Financial Statements",
+      href: `/b/${bid}/statements`,
+      exact: false,
+      icon: FileSpreadsheet,
     },
     {
       name: "Contacts",
@@ -148,22 +164,10 @@ export default function BusinessDashboardLayout() {
       icon: Users,
     },
     {
-      name: "Ledgers",
-      href: `/b/${bid}/ledgers`,
-      exact: false,
-      icon: BookOpen,
-    },
-    {
       name: "Inventory",
       href: `/b/${bid}/inventory`,
       exact: false,
       icon: Boxes,
-    },
-    {
-      name: "Financial Statements",
-      href: `/b/${bid}/statements`,
-      exact: false,
-      icon: FileSpreadsheet,
     },
   ];
 
@@ -178,7 +182,10 @@ export default function BusinessDashboardLayout() {
   const currentPath = location.pathname;
   const isOverview =
     currentPath === `/b/${bid}` || currentPath === `/b/${bid}/`;
-  const isLedgers = currentPath.startsWith(`/b/${bid}/ledgers`);
+  const isGeneralLedger =
+    currentPath.startsWith(`/b/${bid}/general-ledger`) ||
+    currentPath.startsWith(`/b/${bid}/ledgers`);
+  const isAccounts = currentPath.startsWith(`/b/${bid}/accounts`);
 
   // Header Title & Description
   const getHeaderInfo = () => {
@@ -186,12 +193,6 @@ export default function BusinessDashboardLayout() {
       return {
         title: "Overview",
         description: "Summary of your cash balances, revenue, and expenses.",
-      };
-    }
-    if (currentPath.startsWith(`/b/${bid}/charts`)) {
-      return {
-        title: "Charts & Analytics",
-        description: "Visual breakdown of income, expenses, and trends.",
       };
     }
     if (currentPath.startsWith(`/b/${bid}/transactions`)) {
@@ -203,13 +204,22 @@ export default function BusinessDashboardLayout() {
     if (currentPath.startsWith(`/b/${bid}/contacts`)) {
       return {
         title: "Contacts",
-        description: "Manage customers and vendors, and see their transactions.",
+        description:
+          "Manage customers and vendors, and see their transactions.",
       };
     }
-    if (isLedgers) {
+    if (isGeneralLedger) {
       return {
-        title: "Ledgers",
-        description: "Review ledger activity and make sure debits equal credits.",
+        title: "General Ledger",
+        description:
+          "Every posted transaction and its debit and credit entries.",
+      };
+    }
+    if (isAccounts) {
+      return {
+        title: "Accounts",
+        description:
+          "Review account balances and debit or credit activity by category.",
       };
     }
     if (currentPath.startsWith(`/b/${bid}/inventory`)) {
@@ -221,13 +231,27 @@ export default function BusinessDashboardLayout() {
     if (currentPath.startsWith(`/b/${bid}/statements`)) {
       return {
         title: "Financial Statements",
-        description: "Profit & Loss and Balance Sheet statements.",
+        description:
+          "Profit & Loss, Balance Sheet, Cash Flow, and Trial Balance.",
       };
     }
     if (currentPath.startsWith(`/b/${bid}/settings`)) {
       return {
         title: "Business Settings",
         description: `Configuration for ${currentBusinessName}.`,
+      };
+    }
+    if (currentPath.startsWith(`/b/${bid}/help`)) {
+      return {
+        title: "Help & getting started",
+        description:
+          "Learn how to record entries and review your business books.",
+      };
+    }
+    if (currentPath.startsWith(`/b/${bid}/feedback`)) {
+      return {
+        title: "Feedback",
+        description: "Share your experience and help improve Ihsaab.",
       };
     }
     if (currentPath.startsWith(`/b/${bid}/account`)) {
@@ -252,14 +276,25 @@ export default function BusinessDashboardLayout() {
       )}
 
       <DashboardSidebar
-        bid={bid} currentPath={currentPath} currentBusinessName={currentBusinessName}
-        userEmail={user?.email} businesses={businesses} navLinks={navLinks}
-        mobileSidebarOpen={mobileSidebarOpen} setMobileSidebarOpen={setMobileSidebarOpen}
-        switcherOpen={switcherOpen} setSwitcherOpen={setSwitcherOpen}
-        profileMenuOpen={profileMenuOpen} setProfileMenuOpen={setProfileMenuOpen}
-        switcherRef={switcherRef} profileMenuRef={profileMenuRef} isLoggingOut={isLoggingOut}
-        onSelectBusiness={handleSelectBusiness} onSignOut={handleSignOut} isLinkActive={isLinkActive}
-        
+        bid={bid}
+        currentPath={currentPath}
+        currentBusinessName={currentBusinessName}
+        userEmail={user?.email}
+        businesses={businesses}
+        navLinks={navLinks}
+        mobileSidebarOpen={mobileSidebarOpen}
+        setMobileSidebarOpen={setMobileSidebarOpen}
+        switcherOpen={switcherOpen}
+        setSwitcherOpen={setSwitcherOpen}
+        profileMenuOpen={profileMenuOpen}
+        setProfileMenuOpen={setProfileMenuOpen}
+        switcherRef={switcherRef}
+        profileMenuRef={profileMenuRef}
+        isLoggingOut={isLoggingOut}
+        onSelectBusiness={handleSelectBusiness}
+        onSignOut={handleSignOut}
+        isLinkActive={isLinkActive}
+        onNewEntry={() => setNewEntryOpen(true)}
       />
 
       {/* ================= MAIN CONTENT AREA ================= */}
@@ -291,7 +326,14 @@ export default function BusinessDashboardLayout() {
 
         {/* Sub-page Outlet */}
         <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <Outlet context={{ bid, currentBusinessName, currentBusinessCurrency, setNewEntryOpen }} />
+          <Outlet
+            context={{
+              bid,
+              currentBusinessName,
+              currentBusinessCurrency,
+              setNewEntryOpen,
+            }}
+          />
         </main>
       </div>
 

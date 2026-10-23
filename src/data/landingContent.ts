@@ -11,16 +11,16 @@ import {
 } from "lucide-react"
 
 export const heroContent = {
-  audience: "Built exclusively for SMB owners & founders",
+  audience: "Ihsaab public beta · Built for SMB owners",
   promise: "Zero debits or credits required",
   headline: "Do your accounting",
   headlineEmphasis: "without doing accounting.",
   description:
     "You started a business to build something great—not to babysit spreadsheets, reconcile bank lines, or decipher double-entry codes. Just create a new entry in Ihsaab, and our automated engine handles the rest.",
-  primaryAction: "Start Free Now",
+  primaryAction: "Try the Beta",
   signInAction: "Sign In",
-  assurances: ["No credit card needed", "Setup in under 60 seconds", "14-day free trial"],
-  demoLabel: "Live Interactive Hero Sandbox: Try it right now!",
+  assurances: ["Public beta", "Core bookkeeping flows ready", "Your feedback shapes what’s next"],
+  demoLabel: "Sample Ihsaab dashboard",
 }
 
 export const featureSectionContent = {
@@ -111,33 +111,6 @@ export const howItWorksContent = {
   whatHappens: "What happens:",
 }
 
-export const pricingContent = {
-  eyebrow: "Simple, Transparent Pricing",
-  title: "One simple plan. Everything included.",
-  description:
-    "No hidden tiers, no surprise add-on charges. Total accounting peace of mind for your business.",
-  features: [
-    "Unlimited business entries & transactions",
-    "Automatic double-entry ledger postings",
-    "Tax amounts recorded with each entry",
-    "Instant Profit & Loss, Balance Sheet, & Cash Flow",
-    "Printable financial statements and ledgers",
-    "Customer and vendor records",
-    "Multi-device sync (iPhone, Android, iPad, Desktop)",
-    "Document & receipt attachment storage",
-    "Private business records with access controls",
-    "Priority SMB customer support",
-  ],
-  planName: "Ihsaab Complete",
-  planDescription: "Everything an SMB needs to do accounting without doing accounting.",
-  billingOptions: { monthly: "Monthly Billing", yearly: "Annual Billing", yearlySavings: "Save $200 / yr" },
-  prices: { monthly: "$100", yearly: "$1,000" },
-  billingNotes: { monthly: "Billed monthly, cancel anytime", yearly: "Equivalent to $83.33/mo (Billed annually)" },
-  includedHeading: "Everything Included In Your Plan:",
-  trialAction: "Start 14-Day Free Trial",
-  trialNotes: ["14 days free full access", "No credit card required upfront", "Cancel anytime in 1 click"],
-}
-
 export const faqContent = {
   eyebrow: "Frequently Asked Questions",
   title: "Everything you need to know.",
@@ -183,37 +156,36 @@ export const comparisonContent = {
   rows: [
     { feature: "Accounting Learning Curve", traditional: "Requires courses or accounting background", spreadsheets: "Requires custom formulas and accounting skills", ihsaab: "Zero learning curve: write what happened" },
     { feature: "Data Entry Experience", traditional: "Tedious journal codes, debit & credit columns", spreadsheets: "Manual entry prone to broken cell links", ihsaab: "Plain business description + amount" },
-    { feature: "Double-Entry Book Balancing", traditional: "Manual reconciliation; easy to be out of balance", spreadsheets: "No automatic balancing mechanism", ihsaab: "100% automated & mathematically verified" },
+    { feature: "Double-Entry Book Balancing", traditional: "Manual reconciliation; easy to be out of balance", spreadsheets: "No automatic balancing mechanism", ihsaab: "Matching ledger lines created from each entry" },
     { feature: "Tax Preparation & Reserves", traditional: "Chaotic calculation at year-end", spreadsheets: "Manual guessing and formula errors", ihsaab: "Tax amounts recorded with each entry" },
-    { feature: "Time Spent per Week", traditional: "4 - 8 hours of reconciliation headaches", spreadsheets: "5+ hours of formula maintenance", ihsaab: "Under 10 minutes (just create an entry!)" },
+    { feature: "Time Spent per Week", traditional: "Time needed for reconciliations", spreadsheets: "Time needed to maintain formulas", ihsaab: "Designed to reduce manual bookkeeping work" },
     { feature: "CPA / Accountant Export", traditional: "Messy adjustments needed", spreadsheets: "Accountants charge extra to clean up", ihsaab: "Printable financial reports and ledger activity" },
   ],
 }
 
 export const navbarContent = {
-  tagline: "Accounting on Autopilot",
+  tagline: "Ihsaab public beta",
   links: [
     { label: "Interactive Demo", href: "#demo" },
     { label: "How It Works", href: "#how-it-works" },
     { label: "Features", href: "#features" },
     { label: "Comparison", href: "#comparison" },
-    { label: "Pricing", href: "#pricing" },
     { label: "FAQ", href: "#faq" },
   ],
   signIn: "Sign In",
-  desktopAction: "Get Started",
-  mobileAction: "Get Started Free",
+  desktopAction: "Try the Beta",
+  mobileAction: "Try the Beta",
   menuLabel: "Toggle navigation menu",
 }
 
 export const ctaContent = {
-  eyebrow: "Never stress over bookkeeping again",
+  eyebrow: "Ihsaab public beta",
   title: "Stop doing accounting. Start running your business.",
   description:
     "Create an entry in your business dashboard. Ihsaab creates the matching ledger postings and updates your financial reports automatically.",
-  primaryAction: "Get Started Free",
+  primaryAction: "Try the Beta",
   signInAction: "Sign In",
-  assurances: ["No credit card required", "14-day full feature trial", "Cancel anytime with 1 click"],
+  assurances: ["Features are still evolving", "Core bookkeeping flows are ready", "Your feedback shapes what’s next"],
 }
 
 export const footerContent = {
@@ -222,15 +194,14 @@ export const footerContent = {
   status: "Business records protected by account access controls",
   productHeading: "Product",
   productLinks: [
-    { label: "Interactive Simulator", href: "#demo" },
+    { label: "Sample Dashboard", href: "#demo" },
     { label: "How It Works", href: "#how-it-works" },
     { label: "Features for SMBs", href: "#features" },
     { label: "Ihsaab vs QuickBooks", href: "#comparison" },
-    { label: "Pricing ($100/mo or $1000/yr)", href: "#pricing" },
   ],
   startHeading: "Get Started",
   startLinks: [
-    { label: "Create Free Account", href: "/auth/sign-up", internal: true },
+    { label: "Create Beta Account", href: "/auth/sign-up", internal: true },
     { label: "Sign In", href: "/auth/sign-in", internal: true },
     { label: "FAQ & Support", href: "#faq", internal: false },
   ],

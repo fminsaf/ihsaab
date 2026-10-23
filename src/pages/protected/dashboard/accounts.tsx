@@ -15,7 +15,7 @@ interface TransactionPosting { id: string; contact_id: string | null; date: stri
 interface Context { bid: string; currentBusinessCurrency?: string }
 const CATEGORY_ORDER = ["asset", "liability", "equity", "income", "expense"]
 
-export default function LedgersPage() {
+export default function AccountsPage() {
   const { bid, currentBusinessCurrency = "USD" } = useOutletContext<Context>()
   const [entries, setEntries] = useState<Entry[]>([])
   const [contacts, setContacts] = useState<Record<string, string>>({})
@@ -62,13 +62,13 @@ export default function LedgersPage() {
 
   return <div className="mx-auto max-w-7xl space-y-5">
     <div className="flex flex-wrap items-end justify-between gap-3">
-      <div><h2 className="text-xl font-bold">Ledgers</h2><p className="mt-1 text-sm text-muted-foreground">Each account is shown as a debit and credit T-account. Select one to view its full activity.</p></div>
-      <Button variant="outline" size="icon" aria-label="Refresh ledgers" onClick={() => void load()}><RefreshCw className="size-4" /></Button>
+      <div><h2 className="text-xl font-bold">Accounts</h2><p className="mt-1 text-sm text-muted-foreground">Accounts are grouped into the five main categories. Select an account to review its debit and credit activity.</p></div>
+      <Button variant="outline" size="icon" aria-label="Refresh accounts" onClick={() => void load()}><RefreshCw className="size-4" /></Button>
     </div>
-    {error && <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">Could not load ledger data: {error}</p>}
-    <div className="relative max-w-md"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input aria-label="Search ledgers" placeholder="Search ledgers" value={search} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearch(event.target.value)} className="pl-9" /></div>
+    {error && <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">Could not load account activity: {error}</p>}
+    <div className="relative max-w-md"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input aria-label="Search accounts" placeholder="Search accounts" value={search} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearch(event.target.value)} className="pl-9" /></div>
 
-    {loading ? <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }, (_, index) => <div key={index} className="h-52 animate-pulse rounded-2xl bg-muted" />)}</div> : groups.length ? groups.map((group) => <section key={group.category} className="space-y-3"><h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{group.category} ledgers</h3><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{group.rows.map((account) => {
+    {loading ? <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }, (_, index) => <div key={index} className="h-52 animate-pulse rounded-2xl bg-muted" />)}</div> : groups.length ? groups.map((group) => <section key={group.category} className="space-y-3"><h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{group.category} accounts</h3><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{group.rows.map((account) => {
       const totals = accountTotals(account)
       const debitIsBalanceSide = normalDebit(account)
       const balance = debitIsBalanceSide ? totals.debitBalance || totals.creditBalance : totals.creditBalance || totals.debitBalance
@@ -82,7 +82,7 @@ export default function LedgersPage() {
 
     <Dialog open={selected !== null} onOpenChange={(open) => { if (!open) setSelected(null) }}>
       <DialogContent className="max-h-[88vh] max-w-3xl overflow-y-auto">
-        <DialogHeader><DialogTitle>{selected?.name ?? "Ledger activity"}</DialogTitle><DialogDescription className="capitalize">{selected?.category} ledger · full debit and credit transaction history</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>{selected?.name ?? "Account activity"}</DialogTitle><DialogDescription className="capitalize">{selected?.category} account · T-account debit and credit activity</DialogDescription></DialogHeader>
         {selected && <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3 rounded-xl border border-border bg-muted/20 p-3 text-sm"><div><span className="block text-xs font-medium uppercase text-muted-foreground">Total debit</span><span className="font-semibold tabular-nums">{format(accountTotals(selected).debit)}</span></div><div><span className="block text-xs font-medium uppercase text-muted-foreground">Total credit</span><span className="font-semibold tabular-nums">{format(accountTotals(selected).credit)}</span></div></div>
           <div className="hidden grid-cols-[100px_minmax(0,1fr)_minmax(0,0.7fr)_minmax(0,0.7fr)] gap-3 border-b border-border px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid"><span>Date</span><span>Description / contact</span><span className="text-right">Debit</span><span className="text-right">Credit</span></div>

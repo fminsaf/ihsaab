@@ -43,6 +43,7 @@ export function HeroSection() {
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Link
                 to="/auth/sign-up"
+                id="hero-primary-action"
                 className="inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all duration-200 hover:bg-primary/90 hover:scale-[1.02]"
               >
                 <span>{heroContent.primaryAction}</span>
@@ -68,7 +69,7 @@ export function HeroSection() {
         </div>
 
         {/* Hero Interactive Dashboard UI */}
-        <div id="demo" className="mt-12 sm:mt-16">
+        <div className="mt-12 sm:mt-16">
           <div className="mb-4 text-center">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary">
               <Zap className="size-3.5" />
