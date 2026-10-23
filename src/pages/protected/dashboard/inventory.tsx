@@ -5,6 +5,7 @@ import supabase from "../../../lib/supabase"
 import { Button } from "../../../components/ui/button"
 import { Input } from "../../../components/ui/input"
 import { Label } from "../../../components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../../../components/ui/dialog"
 import { toast } from "../../../components/ui/toast"
 
@@ -13,7 +14,6 @@ interface Product {
   name: string
   sku: string | null
   description: string | null
-  category: string | null
   unit: string
   quantity_on_hand: number
   sale_price: number
@@ -24,14 +24,14 @@ interface ProductForm {
   name: string
   sku: string
   description: string
-  category: string
   unit: string
   initial_stock: string
   sale_price: string
   purchase_cost: string
 }
 interface Context { bid: string; currentBusinessCurrency?: string }
-const EMPTY_FORM: ProductForm = { name: "", sku: "", description: "", category: "", unit: "item", initial_stock: "0", sale_price: "0", purchase_cost: "0" }
+const UNIT_OPTIONS = ["item", "piece", "kg", "g", "lb", "liter", "ml", "meter", "cm", "box", "pack", "pair", "dozen", "set", "hour", "day"]
+const EMPTY_FORM: ProductForm = { name: "", sku: "", description: "", unit: "item", initial_stock: "0", sale_price: "0", purchase_cost: "0" }
 
 export default function InventoryPage() {
   const { bid, currentBusinessCurrency = "USD" } = useOutletContext<Context>()
@@ -49,7 +49,7 @@ export default function InventoryPage() {
     if (!bid) return
     setLoading(true)
     const { data, error: queryError } = await supabase.from("inventory_products")
-      .select("id, name, sku, description, category, unit, quantity_on_hand, sale_price, purchase_cost, is_archived")
+      .select("id, name, sku, description, unit, quantity_on_hand, sale_price, purchase_cost, is_archived")
       .eq("business_id", bid).order("name")
     setProducts(data ?? [])
     setError(queryError?.message ?? "")
@@ -58,7 +58,7 @@ export default function InventoryPage() {
   useEffect(() => { void load() }, [load])
 
   const filtered = useMemo(() => products.filter((product) => product.is_archived === showArchived &&
-    `${product.name} ${product.sku ?? ""} ${product.category ?? ""}`.toLowerCase().includes(search.toLowerCase())), [products, search, showArchived])
+    `${product.name} ${product.sku ?? ""} ${product.description ?? ""}`.toLowerCase().includes(search.toLowerCase())), [products, search, showArchived])
   const format = (value: number) => new Intl.NumberFormat(undefined, { style: "currency", currency: currentBusinessCurrency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value || 0))
 
   function startCreate() {
@@ -73,7 +73,6 @@ export default function InventoryPage() {
       name: product.name,
       sku: product.sku ?? "",
       description: product.description ?? "",
-      category: product.category ?? "",
       unit: product.unit,
       initial_stock: String(product.quantity_on_hand),
       sale_price: String(product.sale_price),
@@ -90,7 +89,7 @@ export default function InventoryPage() {
       p_name: product?.name ?? form.name,
       p_sku: product?.sku ?? form.sku,
       p_description: product?.description ?? form.description,
-      p_category: product?.category ?? form.category,
+      p_category: null,
       p_unit: product?.unit ?? form.unit,
       p_initial_stock: product ? null : Number(form.initial_stock),
       p_sale_price: product ? Number(product.sale_price) : Number(form.sale_price),
@@ -115,7 +114,7 @@ export default function InventoryPage() {
       p_name: form.name,
       p_sku: form.sku || null,
       p_description: form.description || null,
-      p_category: form.category || null,
+      p_category: null,
       p_unit: form.unit,
       p_initial_stock: editing ? null : Number(form.initial_stock),
       p_sale_price: Number(form.sale_price),
@@ -150,13 +149,17 @@ export default function InventoryPage() {
       <Button variant="outline" onClick={() => setShowArchived((current) => !current)}>{showArchived ? "Show active products" : "Show archived"}</Button>
     </div>
     {loading ? <div className="space-y-3">{[1, 2, 3].map((item) => <div key={item} className="h-20 animate-pulse rounded-2xl bg-muted" />)}</div>
-      : filtered.length ? <div className="overflow-hidden rounded-2xl border border-border bg-card"><div className="hidden grid-cols-[minmax(0,2fr)_1fr_1fr_1fr_auto] gap-4 border-b border-border bg-muted/30 px-4 py-3 text-xs font-semibold text-muted-foreground md:grid"><span>Product</span><span>In stock</span><span>Sale price</span><span>Purchase cost</span><span /></div><div className="divide-y divide-border">{filtered.map((product) => <div key={product.id} className="grid gap-3 px-4 py-4 md:grid-cols-[minmax(0,2fr)_1fr_1fr_1fr_auto] md:items-center md:gap-4">
-        <div className="min-w-0"><p className="truncate font-semibold">{product.name}</p><p className="truncate text-xs text-muted-foreground">{[product.sku, product.category, product.description].filter(Boolean).join(" · ") || "No item details"}</p></div>
-        <div><p className="text-xs text-muted-foreground md:hidden">In stock</p><p className="text-sm font-medium tabular-nums">{Number(product.quantity_on_hand).toLocaleString()} {product.unit}</p></div>
-        <div><p className="text-xs text-muted-foreground md:hidden">Sale price</p><p className="text-sm tabular-nums">{format(product.sale_price)}</p></div>
-        <div><p className="text-xs text-muted-foreground md:hidden">Purchase cost</p><p className="text-sm tabular-nums">{format(product.purchase_cost)}</p></div>
-        <div className="flex gap-1"><Button variant="ghost" size="icon" aria-label={`Edit ${product.name}`} onClick={() => startEdit(product)}><Pencil className="size-4" /></Button><Button variant="ghost" size="icon" aria-label={product.is_archived ? `Restore ${product.name}` : `Archive ${product.name}`} onClick={() => void toggleArchived(product)}>{product.is_archived ? <RotateCcw className="size-4" /> : <Archive className="size-4" />}</Button></div>
-      </div>)}</div></div>
+      : filtered.length ? <div className="overflow-x-auto rounded-2xl border border-border bg-card"><table className="w-full min-w-[720px] table-fixed text-sm">
+        <colgroup><col className="w-[34%]" /><col className="w-[17%]" /><col className="w-[17%]" /><col className="w-[20%]" /><col className="w-[12%]" /></colgroup>
+        <thead className="border-b border-border bg-muted/30 text-xs font-semibold text-muted-foreground"><tr><th scope="col" className="px-4 py-3 text-left">Product</th><th scope="col" className="px-4 py-3 text-right">In stock</th><th scope="col" className="px-4 py-3 text-right">Sale price</th><th scope="col" className="px-4 py-3 text-right">Purchase cost</th><th scope="col" className="px-4 py-3 text-right">Actions</th></tr></thead>
+        <tbody className="divide-y divide-border">{filtered.map((product) => <tr key={product.id}>
+          <td className="px-4 py-4"><p className="truncate font-semibold" title={product.name}>{product.name}</p><p className="truncate text-xs text-muted-foreground" title={[product.sku, product.description].filter(Boolean).join(" · ")}>{[product.sku, product.description].filter(Boolean).join(" · ") || "No item details"}</p></td>
+          <td className="px-4 py-4 text-right font-medium tabular-nums">{Number(product.quantity_on_hand).toLocaleString()} {product.unit}</td>
+          <td className="px-4 py-4 text-right tabular-nums">{format(product.sale_price)}</td>
+          <td className="px-4 py-4 text-right tabular-nums">{format(product.purchase_cost)}</td>
+          <td className="px-4 py-4"><div className="flex justify-end gap-1"><Button variant="ghost" size="icon" aria-label={`Edit ${product.name}`} onClick={() => startEdit(product)}><Pencil className="size-4" /></Button><Button variant="ghost" size="icon" aria-label={product.is_archived ? `Restore ${product.name}` : `Archive ${product.name}`} onClick={() => void toggleArchived(product)}>{product.is_archived ? <RotateCcw className="size-4" /> : <Archive className="size-4" />}</Button></div></td>
+        </tr>)}</tbody>
+      </table></div>
       : <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center"><Boxes className="mx-auto size-9 text-muted-foreground/50" /><h3 className="mt-3 font-semibold">{showArchived ? "No archived products" : "No products in inventory"}</h3><p className="mt-1 text-sm text-muted-foreground">{showArchived ? "Archived products will appear here." : "Add a product to start tracking stock and recording item sales."}</p>{!showArchived && <Button className="mt-4" onClick={startCreate}>Add your first product</Button>}</div>}
 
     <Dialog open={dialogOpen} onOpenChange={(open) => { if (!saving) setDialogOpen(open) }}>
@@ -165,8 +168,7 @@ export default function InventoryPage() {
         <form id="inventory-product-form" onSubmit={save} className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="product-name">Name</Label><Input id="product-name" required value={form.name} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, name: event.target.value })} /></div>
           <div className="space-y-1.5"><Label htmlFor="product-sku">SKU</Label><Input id="product-sku" value={form.sku} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, sku: event.target.value })} /></div>
-          <div className="space-y-1.5"><Label htmlFor="product-category">Category</Label><Input id="product-category" value={form.category} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, category: event.target.value })} /></div>
-          <div className="space-y-1.5"><Label htmlFor="product-unit">Unit</Label><Input id="product-unit" required placeholder="item, kg, hour…" value={form.unit} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, unit: event.target.value })} /></div>
+          <div className="space-y-1.5"><Label htmlFor="product-unit">Unit type</Label><Select value={UNIT_OPTIONS.includes(form.unit) ? form.unit : "custom"} onValueChange={(value) => setForm({ ...form, unit: value === "custom" ? "" : value })}><SelectTrigger id="product-unit"><SelectValue placeholder="Choose a unit" /></SelectTrigger><SelectContent>{UNIT_OPTIONS.map((unit) => <SelectItem key={unit} value={unit}>{unit[0].toUpperCase() + unit.slice(1)}</SelectItem>)}<SelectItem value="custom">Custom unit</SelectItem></SelectContent></Select>{!UNIT_OPTIONS.includes(form.unit) && <Input aria-label="Custom unit type" required placeholder="Enter unit type" value={form.unit} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, unit: event.target.value })} />}</div>
           {!editing && <div className="space-y-1.5"><Label htmlFor="product-opening-stock">Opening stock</Label><Input id="product-opening-stock" type="number" min="0" step="0.001" required value={form.initial_stock} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, initial_stock: event.target.value })} /></div>}
           <div className="space-y-1.5"><Label htmlFor="product-sale-price">Sales price</Label><Input id="product-sale-price" type="number" min="0" step="0.01" required value={form.sale_price} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, sale_price: event.target.value })} /></div>
           <div className="space-y-1.5"><Label htmlFor="product-purchase-cost">Purchase cost</Label><Input id="product-purchase-cost" type="number" min="0" step="0.01" required value={form.purchase_cost} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, purchase_cost: event.target.value })} /></div>

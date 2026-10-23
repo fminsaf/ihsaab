@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select"
 import { toast } from "../../../components/ui/toast"
 import { NewTransactionDialog } from "../../../components/transactions/NewTransactionDialog"
+import { LEDGER_BY_CODE } from "../../../lib/ledgerAccounts"
 import {
   ArrowLeftRight,
   TrendingUp,
@@ -33,8 +34,7 @@ interface Transaction {
   date?: string | null
   contact_id?: string | null
   tax_reserved?: number | null
-  debit_account_id?: string | null
-  credit_account_id?: string | null
+  ledger_lines?: { account_code: string; debit: number; credit: number; description?: string | null }[] | null
   correction_of?: string | null
   correction_role?: "reversal" | "replacement" | null
 }
@@ -81,7 +81,6 @@ export default function TransactionsPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [contactNames, setContactNames] = useState<Record<string, string>>({})
-  const [accountNames, setAccountNames] = useState<Record<string, string>>({})
   const [transactionItems, setTransactionItems] = useState<TransactionItem[]>([])
   const [inventoryProducts, setInventoryProducts] = useState<InventoryProduct[]>([])
   const [editItems, setEditItems] = useState<EditItem[]>([])
@@ -92,10 +91,9 @@ export default function TransactionsPage() {
   const fetchTransactions = useCallback(async () => {
     if (!bid) return
     setLoading(true)
-    const [txResult, contactsResult, accountsResult, inventoryResult] = await Promise.all([
-      supabase.from("transactions").select("id, type, amount, description, category, created_at, date, contact_id, tax_reserved, debit_account_id, credit_account_id, correction_of, correction_role").eq("business_id", bid).order("created_at", { ascending: false }).limit(100),
+    const [txResult, contactsResult, inventoryResult] = await Promise.all([
+      supabase.from("transactions").select("id, type, amount, description, category, created_at, date, contact_id, tax_reserved, correction_of, correction_role, ledger_lines").eq("business_id", bid).order("created_at", { ascending: false }).limit(100),
       supabase.from("contacts").select("id, name").eq("business_id", bid),
-      supabase.from("accounts").select("id, name").eq("business_id", bid),
       supabase.from("inventory_products").select("id, name, sku, unit, quantity_on_hand, sale_price, purchase_cost, is_archived").eq("business_id", bid),
     ])
     const transactionIds = (txResult.data ?? []).map((transaction) => transaction.id)
@@ -106,7 +104,6 @@ export default function TransactionsPage() {
     setTransactionItems((itemResult.data ?? []) as TransactionItem[])
     setInventoryProducts((inventoryResult.data ?? []) as InventoryProduct[])
     setContactNames(Object.fromEntries((contactsResult.data ?? []).map((contact) => [contact.id, contact.name])))
-    setAccountNames(Object.fromEntries((accountsResult.data ?? []).map((account) => [account.id, account.name])))
     setLoading(false)
   }, [bid])
 
@@ -157,8 +154,8 @@ export default function TransactionsPage() {
       p_category: editForm.category.trim() || null,
       p_contact_id: editForm.contact_id && editForm.contact_id !== "__none__" ? editForm.contact_id : null,
       p_tax_reserved: editForm.tax_reserved ? Number(editForm.tax_reserved) : null,
-      p_debit_account_id: editing.debit_account_id || null,
-      p_credit_account_id: editing.credit_account_id || null,
+      p_debit_account_id: null,
+      p_credit_account_id: null,
       p_inventory_items: transactionItems.some((item) => item.transaction_id === editing.id)
         ? editItems.map((item) => ({ product_id: item.product_id, quantity: Number(item.quantity) }))
         : null,
@@ -266,7 +263,7 @@ export default function TransactionsPage() {
                   <div><p className="text-xs text-muted-foreground">Category / status</p><p className="font-medium">{tx.category || "Uncategorized"}</p></div>
                   {tx.contact_id && <div className="flex items-start gap-2"><UserRound className="mt-0.5 size-4 shrink-0 text-muted-foreground" /><div><p className="text-xs text-muted-foreground">Contact</p><p className="font-medium">{contactNames[tx.contact_id] || "Contact unavailable"}</p></div></div>}
                   {Number(tx.tax_reserved) > 0 && <div><p className="text-xs text-muted-foreground">Tax</p><p className="font-medium">{Number(tx.tax_reserved).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>}
-                  {(tx.debit_account_id || tx.credit_account_id) && <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">Accounts</p><p className="font-medium">{tx.debit_account_id ? accountNames[tx.debit_account_id] || "Receiving account" : "—"}{tx.credit_account_id ? ` ← ${accountNames[tx.credit_account_id] || "Source account"}` : ""}</p></div>}
+                  {tx.ledger_lines?.length ? <div className="sm:col-span-2"><p className="mb-1 text-xs text-muted-foreground">Automatic ledger posting</p><div className="space-y-1">{tx.ledger_lines.map((line, index) => <p key={`${line.account_code}-${index}`} className="flex justify-between gap-3 font-medium"><span className="truncate">{LEDGER_BY_CODE.get(line.account_code)?.name ?? "Ledger"} · {Number(line.debit) > 0 ? "Debit" : "Credit"}</span><span className="shrink-0 tabular-nums">{Number(Number(line.debit) || Number(line.credit)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></p>)}</div></div> : null}
                   <div><p className="text-xs text-muted-foreground">Recorded</p><p className="font-medium">{new Date(tx.created_at).toLocaleString()}</p></div>
                   {tx.correction_role && <div><p className="text-xs text-muted-foreground">Correction record</p><p className="font-medium capitalize">{tx.correction_role}{tx.correction_of ? ` of ${tx.correction_of.slice(0, 8)}` : ""}</p></div>}
                   <div className="flex items-center justify-end sm:col-span-2"><Button type="button" variant="outline" size="sm" className="gap-2" disabled={tx.correction_role === "reversal"} onClick={() => beginEdit(tx)}><Pencil className="size-3.5" />{tx.correction_role === "reversal" ? "Reversal entry" : "Edit transaction"}</Button></div>

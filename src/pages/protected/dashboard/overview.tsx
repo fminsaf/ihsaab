@@ -3,40 +3,35 @@ import { useOutletContext } from "react-router"
 import { ArrowDownRight, ArrowUpRight, Landmark, Plus, RefreshCw, Scale, Wallet } from "lucide-react"
 import supabase from "../../../lib/supabase"
 import { Button } from "../../../components/ui/button"
+import { LEDGER_BY_CODE } from "../../../lib/ledgerAccounts"
 
-interface Transaction { id: string; type: string; amount: number; category: string | null }
-interface Account { category: string | null; balance: number | null }
+interface Transaction { id: string; type: string; amount: number; category: string | null; ledger_lines: { account_code: string; debit: number; credit: number }[] | null }
 interface Context { bid: string; setNewEntryOpen: (open: boolean) => void; currentBusinessName: string; currentBusinessCurrency?: string }
 
 export default function OverviewPage() {
   const { bid, setNewEntryOpen, currentBusinessName, currentBusinessCurrency = "USD" } = useOutletContext<Context>()
   const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [accounts, setAccounts] = useState<Account[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [transactionResult, accountResult] = await Promise.all([
-      supabase.from("transactions").select("id, type, amount, category").eq("business_id", bid).limit(5000),
-      supabase.from("accounts").select("category, balance").eq("business_id", bid),
-    ])
+    const transactionResult = await supabase.from("transactions").select("id, type, amount, category, ledger_lines").eq("business_id", bid).limit(5000)
     setTransactions(transactionResult.data ?? [])
-    setAccounts(accountResult.data ?? [])
-    setError(transactionResult.error?.message || accountResult.error?.message || "")
+    setError(transactionResult.error?.message || "")
     setLoading(false)
   }, [bid])
   useEffect(() => { void load() }, [load])
 
-  const reversalPrefix = "correction reversal · "
-  const revenue = transactions.filter((row) => row.type === "income" && !row.category?.toLowerCase().startsWith("customer payment") && !row.category?.toLowerCase().startsWith("correction reversal"))
-  const expenses = transactions.filter((row) => row.type === "expense" && !row.category?.toLowerCase().startsWith("correction reversal"))
-  const revenueReversals = transactions.filter((row) => row.type === "expense" && row.category?.toLowerCase().startsWith(reversalPrefix) && !row.category.toLowerCase().startsWith(`${reversalPrefix}customer payment`))
-  const expenseReversals = transactions.filter((row) => row.type === "income" && row.category?.toLowerCase().startsWith(reversalPrefix) && !row.category.toLowerCase().startsWith(`${reversalPrefix}customer payment`))
-  const totalIncome = revenue.reduce((sum, row) => sum + Number(row.amount || 0), 0) - revenueReversals.reduce((sum, row) => sum + Number(row.amount || 0), 0)
-  const totalExpenses = expenses.reduce((sum, row) => sum + Number(row.amount || 0), 0) - expenseReversals.reduce((sum, row) => sum + Number(row.amount || 0), 0)
+  const postings = transactions.flatMap((transaction) => transaction.ledger_lines ?? [])
+  const totalIncome = postings.reduce((sum, line) => sum + (LEDGER_BY_CODE.get(line.account_code)?.category === "income" ? Number(line.credit) - Number(line.debit) : 0), 0)
+  const totalExpenses = postings.reduce((sum, line) => sum + (LEDGER_BY_CODE.get(line.account_code)?.category === "expense" ? Number(line.debit) - Number(line.credit) : 0), 0)
   const netIncome = totalIncome - totalExpenses
-  const totalFor = (category: string) => accounts.filter((account) => account.category?.toLowerCase() === category).reduce((sum, account) => sum + Number(account.balance || 0), 0)
+  const totalFor = (category: string) => postings.reduce((sum, line) => {
+    if (LEDGER_BY_CODE.get(line.account_code)?.category !== category) return sum
+    const movement = Number(line.debit) - Number(line.credit)
+    return sum + (category === "asset" ? movement : -movement)
+  }, 0)
   const assets = totalFor("asset")
   const liabilities = totalFor("liability")
   const equity = totalFor("equity") + netIncome

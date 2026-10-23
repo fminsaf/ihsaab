@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import supabase from "../../lib/supabase"
 import { toast } from "../ui/toast"
 import { Button } from "../ui/button"
@@ -23,6 +23,7 @@ import {
   TrendingUp,
   TrendingDown,
   ArrowLeftRight,
+  Plus,
 } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -30,14 +31,7 @@ import {
 type TransactionType = "income" | "expense" | "transfer"
 type EntryAction = "sale" | "customer_payment" | "purchase" | "stock_purchase" | "asset_purchase" | "expense" | "transfer"
 type PaymentMethod = "cash" | "bank_transfer"
-
-interface Account {
-  id: string
-  name: string
-  type?: string
-  category?: string
-  code?: string
-}
+type TransferDirection = "cash_to_bank" | "bank_to_cash"
 
 interface ContactOption {
   id: string
@@ -52,6 +46,7 @@ interface InventoryProduct {
   quantity_on_hand: number
   sale_price: number
   purchase_cost: number
+  average_cost: number
 }
 interface InventoryLine { product_id: string; quantity: string }
 
@@ -71,11 +66,7 @@ interface FormState {
   vendor: string
   category: string
   tax_reserved: string
-  // transfer + income/expense accounts
-  debit_account_id: string
-  credit_account_id: string
-  payment_account_id: string
-  asset_account_id: string
+  transfer_direction: TransferDirection
 }
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -158,10 +149,11 @@ const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: "cash", label: "Cash" },
   { value: "bank_transfer", label: "Bank Transfer" },
 ]
+const EXPENSE_CATEGORIES = ["Advertising & Marketing", "Bank Charges", "Electricity & Utilities", "Insurance Expense", "Internet & Telephone", "Office Supplies", "Rent Expense", "Repairs & Maintenance", "Salaries & Wages", "Taxes & Licenses", "Transport & Travel", "Miscellaneous Expenses"]
 
 const EMPTY_FORM: FormState = {
-  action: "",
-  type: "",
+  action: "sale",
+  type: "income",
   amount: "",
   date: new Date().toISOString().split("T")[0],
   description: "",
@@ -169,14 +161,11 @@ const EMPTY_FORM: FormState = {
   payment_status: "paid",
   customer: "",
   invoice_number: "",
-  payment_method: "",
+  payment_method: "cash",
   vendor: "",
   category: "",
   tax_reserved: "",
-  debit_account_id: "",
-  credit_account_id: "",
-  payment_account_id: "",
-  asset_account_id: "",
+  transfer_direction: "cash_to_bank",
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -196,15 +185,12 @@ export function NewTransactionDialog({
   onSuccess,
 }: NewTransactionDialogProps) {
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
-  const [accounts, setAccounts] = useState<Account[]>([])
   const [contacts, setContacts] = useState<ContactOption[]>([])
   const [inventoryProducts, setInventoryProducts] = useState<InventoryProduct[]>([])
   const [inventoryLines, setInventoryLines] = useState<InventoryLine[]>([])
   const [addingContact, setAddingContact] = useState(false)
   const [newContactName, setNewContactName] = useState("")
-  const [loadingAccounts, setLoadingAccounts] = useState(false)
   const [saving, setSaving] = useState(false)
-  const amountRef = useRef<HTMLInputElement>(null)
 
   // Contacts are used by income and expense entries.
   useEffect(() => {
@@ -213,44 +199,16 @@ export function NewTransactionDialog({
       .then(({ data }) => setContacts(data ?? []))
   }, [open, businessId])
 
-  // Load account options only for transaction types that use ledger accounts.
-  useEffect(() => {
-    const usesAccounts = ["transfer", "sale", "customer_payment", "purchase", "stock_purchase", "asset_purchase", "expense"].includes(form.action)
-    if (!open || !businessId || !usesAccounts) return
-    setLoadingAccounts(true)
-    setAccounts([])
-    supabase
-      .from("accounts")
-      .select("id, name, category")
-      .eq("business_id", businessId)
-      .order("name")
-      .then(({ data, error }) => {
-        setLoadingAccounts(false)
-        if (error) {
-          toast.add({ description: "Failed to load accounts.", type: "error" })
-        } else {
-          setAccounts(data ?? [])
-        }
-      })
-  }, [open, businessId, form.action])
-
   useEffect(() => {
     if (!open || !businessId || (form.action !== "sale" && form.action !== "stock_purchase")) return
     supabase.from("inventory_products")
-      .select("id, name, sku, unit, quantity_on_hand, sale_price, purchase_cost")
+      .select("id, name, sku, unit, quantity_on_hand, sale_price, purchase_cost, average_cost")
       .eq("business_id", businessId).eq("is_archived", false).order("name")
       .then(({ data, error }) => {
         if (error) toast.add({ description: "Failed to load inventory.", type: "error" })
         setInventoryProducts(data ?? [])
       })
   }, [open, businessId, form.action])
-
-  // ── Focus amount when type is selected ────────────────────────────────────
-  useEffect(() => {
-    if (form.type) {
-      setTimeout(() => amountRef.current?.focus(), 50)
-    }
-  }, [form.type])
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -312,21 +270,13 @@ export function NewTransactionDialog({
       toast.add({ description: "Choose a vendor or add a new one.", type: "error" })
       return false
     }
-    if (form.action === "asset_purchase" && !form.asset_account_id) {
-      toast.add({ description: "Choose the asset ledger for this purchase.", type: "error" })
+    if ((form.action === "purchase" || form.action === "expense") && !form.category) {
+      toast.add({ description: "Choose an expense category.", type: "error" })
       return false
     }
-    const paymentCanUseBank = form.action === "customer_payment" || form.action === "expense" || form.payment_status === "paid"
-    if (form.action !== "transfer" && paymentCanUseBank && form.payment_method === "bank_transfer" && !form.payment_account_id) {
-      toast.add({ description: "Choose the bank ledger used for this transaction.", type: "error" })
-      return false
-    }
-    if (form.type === "transfer" && (!form.debit_account_id || !form.credit_account_id)) {
-      toast.add({ description: "Choose the accounts the money moves between.", type: "error" })
-      return false
-    }
-    if (form.type === "transfer" && form.debit_account_id === form.credit_account_id) {
-      toast.add({ description: "Debit and credit accounts must be different for a transfer.", type: "error" })
+    const tax = form.tax_reserved === "" ? 0 : Number(form.tax_reserved)
+    if (form.action !== "transfer" && form.action !== "customer_payment" && (!Number.isFinite(tax) || tax < 0)) {
+      toast.add({ description: "Enter a valid tax amount (0 or more).", type: "error" })
       return false
     }
     return true
@@ -370,11 +320,11 @@ export function NewTransactionDialog({
         p_contact_id: contactId,
         p_payment_status: form.payment_status,
         p_payment_method: form.payment_status === "paid" ? form.payment_method || null : null,
-        p_tax_reserved: form.action === "stock_purchase" && form.tax_reserved ? Number(form.tax_reserved) : null,
+        p_tax_reserved: form.tax_reserved ? Number(form.tax_reserved) : 0,
         p_category: form.action === "stock_purchase" ? form.category || null : form.invoice_number || null,
         p_items: inventoryLines.map((line) => ({ product_id: line.product_id, quantity: Number(line.quantity) })),
-        p_debit_account_id: form.action === "sale" && form.payment_status === "paid" && form.payment_method === "bank_transfer" ? form.payment_account_id || null : null,
-        p_credit_account_id: form.action === "stock_purchase" && form.payment_status === "paid" && form.payment_method === "bank_transfer" ? form.payment_account_id || null : null,
+        p_debit_account_id: null,
+        p_credit_account_id: null,
       })
       setSaving(false)
       if (error) {
@@ -400,13 +350,6 @@ export function NewTransactionDialog({
       type: form.type,
       amount: parseFloat(form.amount),
       description: form.description || null,
-      debit_account_id: form.action === "transfer" ? form.debit_account_id || null
-        : form.action === "asset_purchase" ? form.asset_account_id || null
-        : form.action === "customer_payment" && form.payment_method === "bank_transfer" ? form.payment_account_id || null
-        : null,
-      credit_account_id: form.action === "transfer" ? form.credit_account_id || null
-        : form.type === "expense" && form.payment_method === "bank_transfer" && form.payment_status === "paid" ? form.payment_account_id || null
-        : null,
     }
 
     let typePayload: Record<string, unknown> = {}
@@ -425,17 +368,22 @@ export function NewTransactionDialog({
       }
     } else if (form.type === "income") {
       typePayload = {
-        category: form.customer
-          ? `Customer: ${form.customer}`
-          : form.invoice_number
-          ? `Invoice: ${form.invoice_number}`
-          : form.category || null,
-        tax_reserved: null,
+        category: [
+          form.customer ? `Customer: ${form.customer}` : form.invoice_number ? `Invoice: ${form.invoice_number}` : form.category || "Sale",
+          form.payment_status === "paid" ? "Paid" : "Unpaid",
+          form.payment_status === "paid" && form.payment_method === "bank_transfer" ? "bank_transfer" : "",
+        ].filter(Boolean).join(" · "),
+        tax_reserved: form.tax_reserved ? parseFloat(form.tax_reserved) : 0,
       }
     } else if (form.type === "expense") {
       typePayload = {
         category: form.category || "Other Expense",
         tax_reserved: form.tax_reserved ? parseFloat(form.tax_reserved) : 0,
+      }
+    } else if (form.action === "transfer") {
+      typePayload = {
+        category: form.transfer_direction === "cash_to_bank" ? "Transfer · Cash to bank" : "Transfer · Bank to cash",
+        tax_reserved: null,
       }
     } else {
       typePayload = {
@@ -467,62 +415,6 @@ export function NewTransactionDialog({
     onSuccess?.()
   }
 
-  // ── Account option helpers ────────────────────────────────────────────────
-  const accountOptions = accounts.map((a) => ({
-    value: a.id,
-    label: a.code ? `${a.code} · ${a.name}` : a.name,
-    type: a.type,
-  }))
-
-  function AccountSelect({
-    id,
-    value,
-    onChange,
-    placeholder,
-    excludeId,
-  }: {
-    id: string
-    value: string
-    onChange: (v: string) => void
-    placeholder: string
-    excludeId?: string
-  }) {
-    const options = excludeId
-      ? accountOptions.filter((a) => a.value !== excludeId)
-      : accountOptions
-
-    return (
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger id={id} className="w-full">
-          <SelectValue placeholder={loadingAccounts ? "Loading accounts…" : placeholder} />
-        </SelectTrigger>
-        <SelectContent>
-          {options.length === 0 && !loadingAccounts ? (
-            <div className="px-3 py-4 text-center text-sm text-muted-foreground">
-              No accounts found
-            </div>
-          ) : (
-            options.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))
-          )}
-        </SelectContent>
-      </Select>
-    )
-  }
-
-  function BankLedgerField({ id }: { id: string }) {
-    if (form.payment_method !== "bank_transfer") return null
-    const bankAccounts = accounts.filter((account) => {
-      if (account.category?.toLowerCase() !== "asset") return false
-      const normalized = account.name.toLowerCase()
-      return /bank|checking|savings|current account/.test(normalized) || !/cash on hand|receivable|customer dues|inventory/.test(normalized)
-    })
-    return <div className="space-y-1.5"><Label htmlFor={id}>Bank ledger</Label><Select value={form.payment_account_id} onValueChange={(value) => setField("payment_account_id", value)}><SelectTrigger id={id} className="w-full"><SelectValue placeholder="Choose bank account" /></SelectTrigger><SelectContent>{bankAccounts.map((account) => <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>)}</SelectContent></Select>{bankAccounts.length === 0 && <p className="text-xs text-muted-foreground">Create a bank ledger on the Ledgers page first.</p>}</div>
-  }
-
   const selectedTypeMeta = TRANSACTION_TYPES.find((t) => t.value === form.action)
   const isInventoryAction = form.action === "sale" || form.action === "stock_purchase"
   const inventoryTotal = inventoryLines.reduce((total, line) => {
@@ -531,6 +423,51 @@ export function NewTransactionDialog({
     const unitPrice = form.action === "sale" ? Number(product.sale_price) : Number(product.purchase_cost)
     return total + Math.round(Number(line.quantity || 0) * unitPrice * 100) / 100
   }, 0)
+  const previewAmount = isInventoryAction ? inventoryTotal : Number(form.amount || 0)
+  const taxAmount = Number(form.tax_reserved || 0)
+  const grossAmount = previewAmount + taxAmount
+  const paymentLedger = form.payment_method === "bank_transfer" ? "Bank Accounts" : "Cash on Hand"
+  const expenseLedger = EXPENSE_CATEGORIES.includes(form.category) ? form.category : "Miscellaneous Expenses"
+  const postingPreview: { ledger: string; side: "Debit" | "Credit"; amount: number }[] = []
+  const addPosting = (ledger: string, side: "Debit" | "Credit", amount = previewAmount) => {
+    postingPreview.push({ ledger, side, amount: Math.max(0, amount) })
+  }
+  const addTaxPosting = (ledger: string, side: "Debit" | "Credit") => {
+    if (taxAmount > 0) addPosting(ledger, side, taxAmount)
+  }
+
+  if (form.action === "transfer") {
+    const toBank = form.transfer_direction === "cash_to_bank"
+    addPosting(toBank ? "Bank Accounts" : "Cash on Hand", "Debit")
+    addPosting(toBank ? "Cash on Hand" : "Bank Accounts", "Credit")
+  } else if (form.action === "sale") {
+    addPosting(form.payment_status === "unpaid" ? "Accounts Receivable (Customer Dues)" : paymentLedger, "Debit", grossAmount)
+    addPosting("Sales Revenue", "Credit")
+    addTaxPosting("Taxes Payable", "Credit")
+    const cost = inventoryLines.reduce((sum, line) => {
+      const product = inventoryProducts.find((item) => item.id === line.product_id)
+      return sum + Number(line.quantity || 0) * Number(product?.average_cost ?? product?.purchase_cost ?? 0)
+    }, 0)
+    if (inventoryLines.length > 0) {
+      addPosting("Cost of Goods Sold", "Debit", cost)
+      addPosting("Inventory", "Credit", cost)
+    }
+  } else if (form.action === "customer_payment") {
+    addPosting(paymentLedger, "Debit")
+    addPosting("Accounts Receivable (Customer Dues)", "Credit")
+  } else if (form.action === "stock_purchase") {
+    addPosting("Inventory", "Debit")
+    addTaxPosting("Input Tax Recoverable", "Debit")
+    addPosting(form.payment_status === "unpaid" ? "Accounts Payable (Supplier Dues)" : paymentLedger, "Credit", grossAmount)
+  } else if (form.action === "asset_purchase") {
+    addPosting("Property, Plant & Equipment", "Debit")
+    addTaxPosting("Input Tax Recoverable", "Debit")
+    addPosting(form.payment_status === "unpaid" ? "Accounts Payable (Supplier Dues)" : paymentLedger, "Credit", grossAmount)
+  } else if (form.type === "expense") {
+    addPosting(expenseLedger, "Debit")
+    addTaxPosting("Input Tax Recoverable", "Debit")
+    addPosting(form.action === "purchase" && form.payment_status === "unpaid" ? "Accounts Payable (Supplier Dues)" : paymentLedger, "Credit", grossAmount)
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -541,7 +478,7 @@ export function NewTransactionDialog({
         <div className="border-b border-border px-6 pt-6 pb-4">
           <DialogHeader>
             <DialogTitle>New transaction</DialogTitle>
-            <DialogDescription>Choose what happened and enter the details. You can add accounting accounts later.</DialogDescription>
+            <DialogDescription>Choose what happened and enter the details. The app will post it to the fixed ledgers shown below.</DialogDescription>
           </DialogHeader>
         </div>
 
@@ -560,7 +497,7 @@ export function NewTransactionDialog({
               </p>
               <Select value={form.action} onValueChange={(value) => handleTypeSelect(value as EntryAction)}>
                 <SelectTrigger id="transaction-type" className="w-full">
-                  <SelectValue placeholder="Choose transaction type" />
+                  <SelectValue>{selectedTypeMeta?.label ?? "Choose transaction type"}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {TRANSACTION_TYPES.map((item) => (
@@ -578,67 +515,6 @@ export function NewTransactionDialog({
             {/* ── Sections 2 & 3: Only shown after type is selected ── */}
             {form.action && (
               <>
-                {/* ── Section 2: Common details ───────────── */}
-                <section>
-                  <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Common Details
-                  </p>
-                  <div className="space-y-3">
-
-                    {/* Amount */}
-                    <div className="space-y-1.5">
-                      <Label htmlFor="amount">
-                        Amount <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        ref={amountRef}
-                        id="amount"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        placeholder="0.00"
-                        value={isInventoryAction ? inventoryTotal.toFixed(2) : form.amount}
-                        readOnly={isInventoryAction}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setField("amount", e.target.value)
-                        }
-                        required={!isInventoryAction}
-                      />
-                      {isInventoryAction && <p className="text-xs text-muted-foreground">Calculated from the selected inventory items.</p>}
-                    </div>
-
-                    {/* Date */}
-                    <div className="space-y-1.5">
-                      <Label htmlFor="date">
-                        Date <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="date"
-                        type="date"
-                        value={form.date}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setField("date", e.target.value)
-                        }
-                        required
-                      />
-                    </div>
-
-                    {/* Description */}
-                    <div className="space-y-1.5">
-                      <Label htmlFor="description">Description</Label>
-                      <Input
-                        id="description"
-                        type="text"
-                        placeholder="Brief note about this transaction…"
-                        value={form.description}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setField("description", e.target.value)
-                        }
-                      />
-                    </div>
-                  </div>
-                </section>
-
                 {/* ── Section 3: Type-specific details ────── */}
                 <section>
                   <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -659,33 +535,38 @@ export function NewTransactionDialog({
                       : "Transfer Details"}
                   </p>
 
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
 
                     {/* ── INCOME fields ─── */}
                     {(form.action === "sale" || form.action === "customer_payment") && (
                       <>
-                        <div className="space-y-1.5">
+                        <div className="col-span-2 space-y-1.5">
                           <Label htmlFor="contact_id">Customer</Label>
-                          <Select value={form.contact_id} onValueChange={(v) => setField("contact_id", v)}>
-                            <SelectTrigger id="contact_id" className="w-full">
-                              <SelectValue>{contacts.find((contact) => contact.id === form.contact_id)?.name || "Choose a customer"}</SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {contacts.map((contact) => (
-                                <SelectItem key={contact.id} value={contact.id}>{contact.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <button type="button" className="text-xs font-medium text-primary hover:underline" onClick={() => { setAddingContact((open) => !open); setField("contact_id", "") }}>
-                            {addingContact ? "Choose an existing customer" : "+ Create a new customer"}
-                          </button>
-                          {addingContact && <Input aria-label="New customer name" autoFocus placeholder="New customer name" value={newContactName} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNewContactName(event.target.value)} />}
+                          <div className="flex items-center gap-2">
+                            {addingContact ? (
+                              <Input className="min-w-0 flex-1" aria-label="New customer name" autoFocus placeholder="New customer name" value={newContactName} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNewContactName(event.target.value)} />
+                            ) : (
+                              <Select value={form.contact_id} onValueChange={(v) => setField("contact_id", v)}>
+                                <SelectTrigger id="contact_id" className="min-w-0 flex-1">
+                                  <SelectValue>{contacts.find((contact) => contact.id === form.contact_id)?.name || "Choose a customer"}</SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {contacts.map((contact) => (
+                                    <SelectItem key={contact.id} value={contact.id}>{contact.name}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                            <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => { setAddingContact((current) => !current); setField("contact_id", ""); setNewContactName("") }}>
+                              {addingContact ? "Choose existing" : <><Plus className="size-4" /> Create customer</>}
+                            </Button>
+                          </div>
                           <p className="text-xs text-muted-foreground">The customer name will be saved with this transaction.</p>
                         </div>
                         {form.action === "sale" && <div className="space-y-1.5">
                           <Label htmlFor="sale-payment-status">Payment status</Label>
                           <Select value={form.payment_status} onValueChange={(v) => setField("payment_status", v as "paid" | "unpaid")}>
-                            <SelectTrigger id="sale-payment-status" className="w-full"><SelectValue /></SelectTrigger>
+                            <SelectTrigger id="sale-payment-status" className="w-full"><SelectValue>{form.payment_status === "unpaid" ? "Customer owes me" : "Paid now"}</SelectValue></SelectTrigger>
                             <SelectContent><SelectItem value="paid">Paid now</SelectItem><SelectItem value="unpaid">Customer owes me</SelectItem></SelectContent>
                           </Select>
                         </div>}
@@ -701,6 +582,11 @@ export function NewTransactionDialog({
                             }
                           />
                         </div>}
+                        {form.action === "sale" && <div className="space-y-1.5">
+                          <Label htmlFor="sale-tax-amount">Tax amount</Label>
+                          <Input id="sale-tax-amount" type="number" min="0" step="0.01" placeholder="0.00" value={form.tax_reserved} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setField("tax_reserved", e.target.value)} />
+                          <p className="text-xs text-muted-foreground">Added to the amount due.</p>
+                        </div>}
                         {((form.action === "sale" && form.payment_status === "paid") || form.action === "customer_payment") && <div className="space-y-1.5">
                           <Label htmlFor="income_payment_method">Payment Method</Label>
                           <Select
@@ -708,7 +594,7 @@ export function NewTransactionDialog({
                             onValueChange={(v) => setField("payment_method", v as PaymentMethod)}
                           >
                             <SelectTrigger id="income_payment_method" className="w-full">
-                              <SelectValue placeholder="Select method" />
+                              <SelectValue>{PAYMENT_METHODS.find((method) => method.value === form.payment_method)?.label ?? "Select method"}</SelectValue>
                             </SelectTrigger>
                             <SelectContent>
                               {PAYMENT_METHODS.map((m) => (
@@ -719,42 +605,39 @@ export function NewTransactionDialog({
                             </SelectContent>
                           </Select>
                         </div>}
-                        {((form.action === "sale" && form.payment_status === "paid") || form.action === "customer_payment") && <BankLedgerField id="income-bank-ledger" />}
                       </>
                     )}
 
                     {/* ── EXPENSE fields ─── */}
                     {(form.type === "expense" && (form.action === "expense" || form.action === "purchase" || form.action === "stock_purchase" || form.action === "asset_purchase")) && (
                       <>
-                        <div className="space-y-1.5">
+                        <div className="col-span-2 space-y-1.5">
                           <Label htmlFor="vendor-contact">Vendor</Label>
-                          <Select value={form.contact_id} onValueChange={(v) => setField("contact_id", v)}>
-                            <SelectTrigger id="vendor-contact" className="w-full"><SelectValue>{contacts.find((contact) => contact.id === form.contact_id)?.name || "Choose a vendor"}</SelectValue></SelectTrigger>
-                            <SelectContent>{contacts.map((contact) => <SelectItem key={contact.id} value={contact.id}>{contact.name}</SelectItem>)}</SelectContent>
-                          </Select>
-                          <button type="button" className="text-xs font-medium text-primary hover:underline" onClick={() => { setAddingContact((open) => !open); setField("contact_id", "") }}>{addingContact ? "Choose an existing vendor" : "+ Create a new vendor"}</button>
-                          {addingContact && <Input aria-label="New vendor name" autoFocus placeholder="New vendor name" value={newContactName} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNewContactName(event.target.value)} />}
+                          <div className="flex items-center gap-2">
+                            {addingContact ? (
+                              <Input className="min-w-0 flex-1" aria-label="New vendor name" autoFocus placeholder="New vendor name" value={newContactName} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNewContactName(event.target.value)} />
+                            ) : (
+                              <Select value={form.contact_id} onValueChange={(v) => setField("contact_id", v)}>
+                                <SelectTrigger id="vendor-contact" className="min-w-0 flex-1"><SelectValue>{contacts.find((contact) => contact.id === form.contact_id)?.name || "Choose a vendor"}</SelectValue></SelectTrigger>
+                                <SelectContent>{contacts.map((contact) => <SelectItem key={contact.id} value={contact.id}>{contact.name}</SelectItem>)}</SelectContent>
+                              </Select>
+                            )}
+                            <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => { setAddingContact((current) => !current); setField("contact_id", ""); setNewContactName("") }}>
+                              {addingContact ? "Choose existing" : <><Plus className="size-4" /> Create vendor</>}
+                            </Button>
+                          </div>
                         </div>
                         {(form.action === "purchase" || form.action === "stock_purchase" || form.action === "asset_purchase") && <div className="space-y-1.5">
                           <Label htmlFor="purchase-status">Payment status</Label>
                           <Select value={form.payment_status} onValueChange={(v) => setField("payment_status", v as "paid" | "unpaid")}>
-                            <SelectTrigger id="purchase-status" className="w-full"><SelectValue /></SelectTrigger>
+                            <SelectTrigger id="purchase-status" className="w-full"><SelectValue>{form.payment_status === "unpaid" ? "I owe the vendor" : "Paid now"}</SelectValue></SelectTrigger>
                             <SelectContent><SelectItem value="paid">Paid now</SelectItem><SelectItem value="unpaid">I owe the vendor</SelectItem></SelectContent>
                           </Select>
                         </div>}
                         {(form.action === "purchase" || form.action === "stock_purchase" || form.action === "expense") && <div className="space-y-1.5">
                           <Label htmlFor="category">Category</Label>
-                          <Input
-                            id="category"
-                            type="text"
-                            placeholder="e.g. Rent, Utilities, Salaries"
-                            value={form.category}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                              setField("category", e.target.value)
-                            }
-                          />
+                          <Select value={form.category} onValueChange={(value) => setField("category", value)}><SelectTrigger id="category" className="w-full"><SelectValue placeholder="Choose an expense category" /></SelectTrigger><SelectContent>{EXPENSE_CATEGORIES.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select>
                         </div>}
-                        {form.action === "asset_purchase" && <div className="space-y-1.5"><Label htmlFor="asset-ledger">Asset ledger</Label><Select value={form.asset_account_id} onValueChange={(value) => setField("asset_account_id", value)}><SelectTrigger id="asset-ledger" className="w-full"><SelectValue placeholder="Choose asset account" /></SelectTrigger><SelectContent>{accounts.filter((account) => account.category?.toLowerCase() === "asset").map((account) => <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>)}</SelectContent></Select>{accounts.filter((account) => account.category?.toLowerCase() === "asset").length === 0 && <p className="text-xs text-muted-foreground">Add an asset ledger on the Ledgers page first.</p>}</div>}
                         <div className="space-y-1.5">
                           <Label htmlFor="tax_reserved">Tax Amount</Label>
                           <Input
@@ -776,7 +659,7 @@ export function NewTransactionDialog({
                             onValueChange={(v) => setField("payment_method", v as PaymentMethod)}
                           >
                             <SelectTrigger id="expense_payment_method" className="w-full">
-                              <SelectValue placeholder="Select method" />
+                              <SelectValue>{PAYMENT_METHODS.find((method) => method.value === form.payment_method)?.label ?? "Select method"}</SelectValue>
                             </SelectTrigger>
                             <SelectContent>
                               {PAYMENT_METHODS.map((m) => (
@@ -787,11 +670,10 @@ export function NewTransactionDialog({
                             </SelectContent>
                           </Select>
                         </div>}
-                        {(form.action === "expense" || form.payment_status === "paid") && <BankLedgerField id="expense-bank-ledger" />}
                       </>
                     )}
 
-                    {isInventoryAction && <div className="space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-4">
+                    {isInventoryAction && <div className="col-span-2 space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-4">
                       <div className="flex items-center justify-between gap-3"><div><p className="text-sm font-semibold">Inventory items</p><p className="text-xs text-muted-foreground">{form.action === "sale" ? "Sale quantity cannot exceed stock on hand." : "Purchased quantities are added to stock."}</p></div><Button type="button" variant="outline" size="sm" onClick={() => setInventoryLines((current) => [...current, { product_id: "", quantity: "1" }])}>Add item</Button></div>
                       {inventoryProducts.length === 0 && <p className="rounded-xl border border-dashed border-border p-3 text-center text-sm text-muted-foreground">No active inventory products found. Add products on the Inventory page first.</p>}
                       {inventoryLines.length === 0 && inventoryProducts.length > 0 && <p className="rounded-xl border border-dashed border-border p-3 text-center text-sm text-muted-foreground">Add an item to this transaction.</p>}
@@ -800,59 +682,89 @@ export function NewTransactionDialog({
                         const unitPrice = selected ? Number(form.action === "sale" ? selected.sale_price : selected.purchase_cost) : 0
                         const usedElsewhere = new Set(inventoryLines.filter((_, lineIndex) => lineIndex !== index).map((item) => item.product_id))
                         return <div key={index} className="grid grid-cols-[minmax(0,1fr)_6rem_auto] items-end gap-2">
-                          <div className="min-w-0 space-y-1.5"><Label htmlFor={`inventory-product-${index}`}>Product</Label><Select value={line.product_id} onValueChange={(value) => setInventoryLines((current) => current.map((item, lineIndex) => lineIndex === index ? { ...item, product_id: value } : item))}><SelectTrigger id={`inventory-product-${index}`} className="w-full"><SelectValue placeholder="Select product" /></SelectTrigger><SelectContent>{inventoryProducts.filter((product) => !usedElsewhere.has(product.id)).map((product) => <SelectItem key={product.id} value={product.id}>{product.name}{product.sku ? ` · ${product.sku}` : ""}{form.action === "sale" ? ` · ${Number(product.quantity_on_hand)} ${product.unit} available` : ""}</SelectItem>)}</SelectContent></Select><p className="text-xs text-muted-foreground">{selected ? `${unitPrice.toFixed(2)} per ${selected.unit}` : "Choose an item"}</p></div>
+                          <div className="min-w-0 space-y-1.5"><Label htmlFor={`inventory-product-${index}`}>Product</Label><Select value={line.product_id} onValueChange={(value) => setInventoryLines((current) => current.map((item, lineIndex) => lineIndex === index ? { ...item, product_id: value } : item))}><SelectTrigger id={`inventory-product-${index}`} className="w-full"><SelectValue>{selected ? `${selected.name}${selected.sku ? ` · ${selected.sku}` : ""}${form.action === "sale" ? ` · ${Number(selected.quantity_on_hand)} ${selected.unit} available` : ""}` : "Select product"}</SelectValue></SelectTrigger><SelectContent>{inventoryProducts.filter((product) => !usedElsewhere.has(product.id)).map((product) => <SelectItem key={product.id} value={product.id}>{product.name}{product.sku ? ` · ${product.sku}` : ""}{form.action === "sale" ? ` · ${Number(product.quantity_on_hand)} ${product.unit} available` : ""}</SelectItem>)}</SelectContent></Select><p className="text-xs text-muted-foreground">{selected ? `${unitPrice.toFixed(2)} per ${selected.unit}` : "Choose an item"}</p></div>
                           <div className="space-y-1.5"><Label htmlFor={`inventory-quantity-${index}`}>Qty</Label><Input id={`inventory-quantity-${index}`} type="number" min="0.001" step="0.001" max={form.action === "sale" && selected ? selected.quantity_on_hand : undefined} required value={line.quantity} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setInventoryLines((current) => current.map((item, lineIndex) => lineIndex === index ? { ...item, quantity: event.target.value } : item))} /></div>
                           <Button type="button" variant="ghost" size="icon" aria-label="Remove item" onClick={() => setInventoryLines((current) => current.filter((_, lineIndex) => lineIndex !== index))}>×</Button>
                         </div>
                       })}
                     </div>}
 
-                    {/* ── DOUBLE-ENTRY ACCOUNTS (all types) ─── */}
-                    {form.type === "transfer" && <div className="rounded-2xl border border-border/60 bg-muted/20 p-4 space-y-3">
-                      <p className="text-xs font-semibold text-muted-foreground">Transfer accounts</p>
-
-                      <div className="space-y-1.5">
-                        <Label htmlFor="debit_account_id">
-                          Debit Account <span className="text-destructive">*</span>
-                        </Label>
-                        <AccountSelect
-                          id="debit_account_id"
-                          value={form.debit_account_id}
-                          onChange={(v) => setField("debit_account_id", v)}
-                          placeholder="Select debit account"
-                          excludeId={
-                            form.type === "transfer" ? form.credit_account_id : undefined
-                          }
-                        />
-                        <p className="text-[11px] text-muted-foreground">Account receiving the transferred funds.</p>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label htmlFor="credit_account_id">
-                          Credit Account <span className="text-destructive">*</span>
-                        </Label>
-                        <AccountSelect
-                          id="credit_account_id"
-                          value={form.credit_account_id}
-                          onChange={(v) => setField("credit_account_id", v)}
-                          placeholder="Select credit account"
-                          excludeId={
-                            form.type === "transfer" ? form.debit_account_id : undefined
-                          }
-                        />
-                        <p className="text-[11px] text-muted-foreground">Account the funds are coming from.</p>
-                      </div>
-                    </div>}
+                    {form.action === "transfer" && <div className="col-span-2 space-y-1.5"><Label htmlFor="transfer-direction">Transfer direction</Label><Select value={form.transfer_direction} onValueChange={(value) => setField("transfer_direction", value as TransferDirection)}><SelectTrigger id="transfer-direction" className="w-full"><SelectValue>{form.transfer_direction === "cash_to_bank" ? "Cash to bank" : "Bank to cash"}</SelectValue></SelectTrigger><SelectContent><SelectItem value="cash_to_bank">Cash to bank</SelectItem><SelectItem value="bank_to_cash">Bank to cash</SelectItem></SelectContent></Select></div>}
 
                   </div>
                 </section>
+
+                {/* ── Common details (last) ───────────── */}
+                <section>
+                  <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Common Details
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+
+                    {/* Amount */}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="amount">
+                        Amount before tax <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="amount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={isInventoryAction ? inventoryTotal.toFixed(2) : form.amount}
+                        readOnly={isInventoryAction}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setField("amount", e.target.value)
+                        }
+                        required={!isInventoryAction}
+                      />
+                      {isInventoryAction && <p className="text-xs text-muted-foreground">Calculated from the selected inventory items, before tax.</p>}
+                    </div>
+
+                    {/* Date */}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="date">
+                        Date <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="date"
+                        type="date"
+                        value={form.date}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setField("date", e.target.value)
+                        }
+                        required
+                      />
+                    </div>
+
+                    {/* Description */}
+                    <div className="col-span-2 space-y-1.5">
+                      <Label htmlFor="description">Description</Label>
+                      <Input
+                        id="description"
+                        type="text"
+                        placeholder="Brief note about this transaction…"
+                        value={form.description}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setField("description", e.target.value)
+                        }
+                      />
+                    </div>
+                  </div>
+                </section>
+
               </>
             )}
           </div>
         </form>
 
         {/* ── Fixed footer ──────────────────────────────────── */}
-        <div className="border-t border-border px-6 py-4">
+        <div className="border-t border-border px-6 py-3">
+          <section aria-label="Automatic double entry preview" className="mb-3 max-h-36 overflow-y-auto rounded-xl border border-primary/20 bg-primary/5 p-3">
+            <div className="mb-2 flex items-center justify-between gap-2"><p className="text-sm font-semibold">Automatic ledger posting</p><p className="text-[11px] text-muted-foreground">Fixed entries</p></div>
+            <div className="space-y-1.5">{postingPreview.map((line, index) => <div key={`${line.ledger}-${line.side}-${index}`} className="grid grid-cols-[1fr_auto_auto] items-center gap-3 text-xs sm:text-sm"><span className="min-w-0 truncate">{line.ledger}</span><span className={`font-semibold uppercase ${line.side === "Debit" ? "text-blue-700 dark:text-blue-300" : "text-violet-700 dark:text-violet-300"}`}>{line.side}</span><span className="text-right tabular-nums">{line.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>)}</div>
+          </section>
           <DialogFooter>
             <Button type="button" variant="outline" disabled={saving} onClick={handleClose}>
               Cancel

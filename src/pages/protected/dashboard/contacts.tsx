@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useOutletContext } from "react-router"
-import { Building2, Mail, Phone, Plus, Search, Trash2, Users, X } from "lucide-react"
+import { Building2, Mail, Pencil, Phone, Plus, Search, Trash2, Users, X } from "lucide-react"
 import supabase from "../../../lib/supabase"
 import { Button } from "../../../components/ui/button"
 import { Input } from "../../../components/ui/input"
@@ -35,6 +35,7 @@ export default function ContactsPage() {
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingContact, setEditingContact] = useState(false)
   const [saving, setSaving] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -73,20 +74,37 @@ export default function ContactsPage() {
     return contacts.filter((contact) => [contact.name, contact.email, contact.company_name, contact.phone].some((value) => value?.toLocaleLowerCase().includes(query)))
   }, [contacts, search])
 
-  async function createContact(event: React.FormEvent<HTMLFormElement>) {
+  function openAddContact() {
+    setEditingContact(false)
+    setForm({ name: "", email: "", phone: "", company_name: "", notes: "" })
+    setDialogOpen(true)
+  }
+
+  function openEditContact() {
+    if (!selected) return
+    setEditingContact(true)
+    setForm({ name: selected.name, email: selected.email ?? "", phone: selected.phone ?? "", company_name: selected.company_name ?? "", notes: selected.notes ?? "" })
+    setDialogOpen(true)
+  }
+
+  async function saveContact(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!form.name.trim()) return
     setSaving(true)
-    const payload = { business_id: bid, name: form.name.trim(), email: form.email.trim() || null, phone: form.phone.trim() || null, company_name: form.company_name.trim() || null, notes: form.notes.trim() || null }
-    const { data, error } = await supabase.from("contacts").insert(payload).select("id, name, email, phone, company_name, notes").single()
+    const payload = { name: form.name.trim(), email: form.email.trim() || null, phone: form.phone.trim() || null, company_name: form.company_name.trim() || null, notes: form.notes.trim() || null }
+    const result = editingContact && selected
+      ? await supabase.from("contacts").update(payload).eq("id", selected.id).eq("business_id", bid).select("id, name, email, phone, company_name, notes").single()
+      : await supabase.from("contacts").insert({ ...payload, business_id: bid }).select("id, name, email, phone, company_name, notes").single()
     setSaving(false)
-    if (error) { toast.add({ description: error.message, type: "error" }); return }
-    const contact = data as Contact
-    setContacts((current) => [...current, contact].sort((a, b) => a.name.localeCompare(b.name)))
+    if (result.error) { toast.add({ description: result.error.message, type: "error" }); return }
+    const contact = result.data as Contact
+    setContacts((current) => editingContact
+      ? current.map((item) => item.id === contact.id ? contact : item).sort((a, b) => a.name.localeCompare(b.name))
+      : [...current, contact].sort((a, b) => a.name.localeCompare(b.name)))
     setSelected(contact)
     setForm({ name: "", email: "", phone: "", company_name: "", notes: "" })
     setDialogOpen(false)
-    toast.add({ description: "Contact created.", type: "success" })
+    toast.add({ description: editingContact ? "Contact updated." : "Contact created.", type: "success" })
   }
 
   async function deleteContact() {
@@ -110,7 +128,7 @@ export default function ContactsPage() {
     <div className="mx-auto max-w-6xl space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div><h2 className="text-xl font-bold">Your contacts</h2><p className="mt-1 text-sm text-muted-foreground">Keep customer and vendor details with their transaction history.</p></div>
-        <Button className="gap-2 rounded-full" onClick={() => setDialogOpen(true)}><Plus className="size-4" /> Add contact</Button>
+        <Button className="gap-2 rounded-full" onClick={openAddContact}><Plus className="size-4" /> Add contact</Button>
       </div>
 
       <div className="grid min-h-[480px] gap-4 lg:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.6fr)]">
@@ -133,7 +151,7 @@ export default function ContactsPage() {
           {selected ? <>
             <div className="flex items-start justify-between gap-3 border-b border-border pb-5">
               <div className="flex min-w-0 items-center gap-3"><span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Building2 className="size-5" /></span><div className="min-w-0"><h3 className="truncate text-lg font-bold">{selected.name}</h3><p className="text-sm text-muted-foreground">{selected.company_name || "Contact details"}</p></div></div>
-              <Button variant="destructive" size="sm" className="gap-2" onClick={() => setDeleteOpen(true)}><Trash2 className="size-4" />Delete</Button>
+              <div className="flex shrink-0 gap-2"><Button variant="outline" size="sm" className="gap-2" onClick={openEditContact}><Pencil className="size-4" />Edit</Button><Button variant="destructive" size="sm" className="gap-2" onClick={() => setDeleteOpen(true)}><Trash2 className="size-4" />Delete</Button></div>
             </div>
             <div className="flex flex-wrap gap-x-5 gap-y-2 border-b border-border py-4 text-sm text-muted-foreground">
               {selected.email && <a className="inline-flex items-center gap-2 hover:text-foreground" href={`mailto:${selected.email}`}><Mail className="size-4" />{selected.email}</a>}
@@ -148,14 +166,14 @@ export default function ContactsPage() {
         </section>
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent><DialogHeader><DialogTitle>Add a contact</DialogTitle><DialogDescription>Create a customer or vendor for this business.</DialogDescription></DialogHeader>
-          <form onSubmit={createContact} className="space-y-4">
+      <Dialog open={dialogOpen} onOpenChange={(open) => !saving && setDialogOpen(open)}>
+        <DialogContent><DialogHeader><DialogTitle>{editingContact ? "Edit contact" : "Add a contact"}</DialogTitle><DialogDescription>{editingContact ? "Update this contact’s details. Their transaction history stays linked." : "Create a customer or vendor for this business."}</DialogDescription></DialogHeader>
+          <form onSubmit={saveContact} className="space-y-4">
             <div className="space-y-1.5"><Label htmlFor="contact-name">Name *</Label><Input id="contact-name" autoFocus required value={form.name} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, name: event.target.value })} placeholder="Person or business name" /></div>
             <div className="grid gap-3 sm:grid-cols-2"><div className="space-y-1.5"><Label htmlFor="contact-email">Email</Label><Input id="contact-email" type="email" value={form.email} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, email: event.target.value })} /></div><div className="space-y-1.5"><Label htmlFor="contact-phone">Phone</Label><Input id="contact-phone" value={form.phone} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, phone: event.target.value })} /></div></div>
             <div className="space-y-1.5"><Label htmlFor="contact-company">Company name</Label><Input id="contact-company" value={form.company_name} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, company_name: event.target.value })} /></div>
             <div className="space-y-1.5"><Label htmlFor="contact-notes">Notes</Label><Input id="contact-notes" value={form.notes} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, notes: event.target.value })} /></div>
-            <DialogFooter><Button type="button" variant="outline" onClick={() => setDialogOpen(false)}><X className="mr-1 size-4" />Cancel</Button><Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save contact"}</Button></DialogFooter>
+            <DialogFooter><Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}><X className="mr-1 size-4" />Cancel</Button><Button type="submit" disabled={saving}>{saving ? "Saving…" : editingContact ? "Save changes" : "Save contact"}</Button></DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

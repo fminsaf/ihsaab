@@ -363,12 +363,12 @@ const CreateBusinessPage = () => {
         { business_id: bid, name: "Retained Earnings / Historical Equity", category: "equity", balance: retainedEarnings },
       ].filter((a) => a.balance > 0);
 
-      if (initialAccounts.length > 0) {
-        try {
-          await supabase.from("accounts").insert(initialAccounts);
-        } catch (accErr) {
-          console.warn("Accounts table insert skipped:", accErr);
-        }
+      if (businessData?.id) {
+        const { error: chartError } = await supabase.rpc("initialize_business_opening", {
+          p_business_id: bid,
+          p_opening_balances: initialAccounts.map(({ name, category, balance }) => ({ name, category, balance })),
+        });
+        if (chartError) throw chartError;
       }
 
       localStorage.setItem("last_used_business_id", bid);
