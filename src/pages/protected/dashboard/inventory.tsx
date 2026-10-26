@@ -34,7 +34,7 @@ const UNIT_OPTIONS = ["item", "piece", "kg", "g", "lb", "liter", "ml", "meter", 
 const EMPTY_FORM: ProductForm = { name: "", sku: "", description: "", unit: "item", initial_stock: "0", sale_price: "0", purchase_cost: "0" }
 
 export default function InventoryPage() {
-  const { bid, currentBusinessCurrency = "USD" } = useOutletContext<Context>()
+  const { bid, currentBusinessCurrency = "SAR" } = useOutletContext<Context>()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
