@@ -5,6 +5,7 @@ import { useParams, useNavigate, useLocation, Outlet } from "react-router";
 import { useAuth } from "../../../auth/authProvider";
 import supabase from "../../../lib/supabase";
 import { toast } from "../../../components/ui/toast";
+import { useLocale } from "../../../lib/i18n";
 import {
   Menu,
   LayoutDashboard,
@@ -18,6 +19,7 @@ import {
 
 export default function BusinessDashboardLayout() {
   const { bid } = useParams<{ bid: string }>();
+  const { t, direction } = useLocale();
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,7 +30,7 @@ export default function BusinessDashboardLayout() {
   const [businesses, setBusinesses] = useState<BusinessOption[]>([]);
   const [currentBusinessName, setCurrentBusinessName] =
     useState<string>("My Business");
-  const [currentBusinessCurrency, setCurrentBusinessCurrency] = useState("USD");
+  const [currentBusinessCurrency, setCurrentBusinessCurrency] = useState("SAR");
   const [newEntryOpen, setNewEntryOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -128,43 +130,43 @@ export default function BusinessDashboardLayout() {
 
   const navLinks = [
     {
-      name: "Overview",
+      name: t("overview"),
       href: `/b/${bid}`,
       exact: true,
       icon: LayoutDashboard,
     },
     {
-      name: "Transactions",
+      name: t("transactions"),
       href: `/b/${bid}/transactions`,
       exact: false,
       icon: ArrowLeftRight,
     },
     {
-      name: "General Ledger",
+      name: t("generalLedger"),
       href: `/b/${bid}/general-ledger`,
       exact: false,
       icon: BookText,
     },
     {
-      name: "Accounts",
+      name: t("accounts"),
       href: `/b/${bid}/accounts`,
       exact: false,
       icon: BookOpen,
     },
     {
-      name: "Financial Statements",
+      name: t("financialStatements"),
       href: `/b/${bid}/statements`,
       exact: false,
       icon: FileSpreadsheet,
     },
     {
-      name: "Contacts",
+      name: t("contacts"),
       href: `/b/${bid}/contacts`,
       exact: false,
       icon: Users,
     },
     {
-      name: "Inventory",
+      name: t("inventory"),
       href: `/b/${bid}/inventory`,
       exact: false,
       icon: Boxes,
@@ -191,73 +193,68 @@ export default function BusinessDashboardLayout() {
   const getHeaderInfo = () => {
     if (isOverview) {
       return {
-        title: "Overview",
-        description: "Summary of your cash balances, revenue, and expenses.",
+        title: t("overview"),
+        description: t("overviewDescription"),
       };
     }
     if (currentPath.startsWith(`/b/${bid}/transactions`)) {
       return {
-        title: "Transactions",
-        description: "View and filter all recorded business transactions.",
+        title: t("transactions"),
+        description: t("transactionsDescription"),
       };
     }
     if (currentPath.startsWith(`/b/${bid}/contacts`)) {
       return {
-        title: "Contacts",
-        description:
-          "Manage customers and vendors, and see their transactions.",
+        title: t("contacts"),
+        description: t("contactsDescription"),
       };
     }
     if (isGeneralLedger) {
       return {
-        title: "General Ledger",
-        description:
-          "Every posted transaction and its debit and credit entries.",
+        title: t("generalLedger"),
+        description: t("ledgerDescription"),
       };
     }
     if (isAccounts) {
       return {
-        title: "Accounts",
-        description:
-          "Review account balances and debit or credit activity by category.",
+        title: t("accounts"),
+        description: t("accountsDescription"),
       };
     }
     if (currentPath.startsWith(`/b/${bid}/inventory`)) {
       return {
-        title: "Inventory",
-        description: "Manage products, stock, and item prices.",
+        title: t("inventory"),
+        description: t("inventoryDescription"),
       };
     }
     if (currentPath.startsWith(`/b/${bid}/statements`)) {
       return {
-        title: "Financial Statements",
-        description:
-          "Profit & Loss, Balance Sheet, Cash Flow, and Trial Balance.",
+        title: t("financialStatements"),
+        description: t("statementsDescription"),
       };
     }
     if (currentPath.startsWith(`/b/${bid}/settings`)) {
       return {
-        title: "Business Settings",
-        description: `Configuration for ${currentBusinessName}.`,
+        title: t("businessSettings"),
+        description: t("settingsDescription"),
       };
     }
     if (currentPath.startsWith(`/b/${bid}/help`)) {
       return {
-        title: "Help & getting started",
-        description:
-          "Learn how to record entries and review your business books.",
+        title: t("help"),
+        description: t("helpDescription"),
       };
     }
     if (currentPath.startsWith(`/b/${bid}/feedback`)) {
       return {
-        title: "Feedback",
-        description: "Share your experience and help improve Ihsaab.",
+        title: t("feedback"),
+        description: t("feedbackDescription"),
       };
     }
     if (currentPath.startsWith(`/b/${bid}/account`)) {
       return {
-        title: "Personal Account Settings",
-        description: "Manage your profile, email, and credentials.",
+        title: t("personalSettings"),
+        description: t("personalDescription"),
       };
     }
     return { title: "Dashboard", description: currentBusinessName };
@@ -298,7 +295,7 @@ export default function BusinessDashboardLayout() {
       />
 
       {/* ================= MAIN CONTENT AREA ================= */}
-      <div className="flex min-w-0 flex-1 flex-col md:ml-64">
+      <div className={`flex min-w-0 flex-1 flex-col ${direction === "rtl" ? "md:mr-64 md:ml-0" : "md:ml-64"}`}>
         {/* Top Header Bar */}
         <header className="border-border/60 bg-background/80 sticky top-0 z-30 flex h-16 items-center justify-between border-b px-4 backdrop-blur-md sm:px-6">
           <div className="flex items-center gap-3">
