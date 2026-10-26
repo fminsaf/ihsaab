@@ -5,6 +5,7 @@ import supabase from "../../../lib/supabase"
 import { Button } from "../../../components/ui/button"
 import { LEDGER_ACCOUNTS, normalDebit } from "../../../lib/ledgerAccounts"
 import { fetchAllRows } from "../../../lib/fetchAllRows"
+import { useLocale } from "../../../lib/i18n"
 
 interface PostingLine { account_code: string; debit: number; credit: number }
 interface Transaction { id: string; type: string; amount: number; category: string | null; description: string | null; created_at: string; date: string | null; ledger_lines: PostingLine[] | null }
@@ -20,7 +21,8 @@ const STATEMENTS: { id: StatementKind; title: string }[] = [
 const displayDate = (date: string) => new Date(`${date.slice(0, 10)}T00:00:00`).toLocaleDateString()
 
 export default function StatementsPage() {
-  const { bid, currentBusinessName, currentBusinessCurrency = "USD" } = useOutletContext<Context>()
+  const { bid, currentBusinessName, currentBusinessCurrency = "SAR" } = useOutletContext<Context>()
+  const { locale } = useLocale()
   const today = new Date()
   const todayLocal = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
   const [kind, setKind] = useState<StatementKind>("profit-loss")
@@ -103,7 +105,7 @@ export default function StatementsPage() {
   const assets = accountsBy("asset").reduce((sum, row) => sum + balanceFor(row), 0)
   const liabilities = accountsBy("liability").reduce((sum, row) => sum + balanceFor(row), 0)
   const equity = accountsBy("equity").reduce((sum, row) => sum + balanceFor(row), 0) + balanceNetIncome
-  const format = (value: number) => new Intl.NumberFormat(undefined, { style: "currency", currency: currentBusinessCurrency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)
+  const format = (value: number) => new Intl.NumberFormat(locale === "ar" ? "ar-SA" : "en-SA", { style: "currency", currency: currentBusinessCurrency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)
   const title = STATEMENTS.find((item) => item.id === kind)?.title ?? "Financial statement"
 
   function exportPdf() {
