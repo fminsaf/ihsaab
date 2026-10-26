@@ -109,7 +109,7 @@ export default function BusinessDashboardLayout() {
   const handleSelectBusiness = (b: BusinessOption) => {
     setSwitcherOpen(false);
     setCurrentBusinessName(b.name);
-    setCurrentBusinessCurrency(b.currency || "USD");
+    setCurrentBusinessCurrency(b.currency || "SAR");
     // Keep relative route suffix if applicable, or go to root of business
     const suffix = location.pathname.split(`/b/${bid}`)[1] || "";
     navigate(`/b/${b.id}${suffix}`);
