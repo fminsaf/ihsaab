@@ -5,6 +5,7 @@ import supabase from "../../../lib/supabase"
 import { Button } from "../../../components/ui/button"
 import { LEDGER_ACCOUNTS, LEDGER_BY_CODE, normalDebit } from "../../../lib/ledgerAccounts"
 import { fetchAllRows } from "../../../lib/fetchAllRows"
+import { useLocale } from "../../../lib/i18n"
 
 interface PostingLine { account_code: string; debit: number; credit: number }
 interface Transaction { id: string; date: string | null; created_at: string; ledger_lines: PostingLine[] | null }
@@ -12,7 +13,8 @@ interface Context { bid: string; setNewEntryOpen: (open: boolean) => void; curre
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 export default function OverviewPage() {
-  const { bid, setNewEntryOpen, currentBusinessName, currentBusinessCurrency = "USD" } = useOutletContext<Context>()
+  const { bid, setNewEntryOpen, currentBusinessName, currentBusinessCurrency = "SAR" } = useOutletContext<Context>()
+  const { locale } = useLocale()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -68,7 +70,7 @@ export default function OverviewPage() {
     return [...totals.entries()].filter(([, value]) => value > 0).sort((a, b) => b[1] - a[1]).slice(0, 5)
   }, [transactions, year])
 
-  const format = (value: number) => new Intl.NumberFormat(undefined, { style: "currency", currency: currentBusinessCurrency, minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(Number.isFinite(value) ? value : 0)
+  const format = (value: number) => new Intl.NumberFormat(locale === "ar" ? "ar-SA" : "en-SA", { style: "currency", currency: currentBusinessCurrency, minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(Number.isFinite(value) ? value : 0)
   const ratio = (numerator: number, denominator: number) => denominator > 0 ? `${(numerator / denominator * 100).toFixed(1)}%` : "—"
   const assetCoverageRatio = liabilities > 0 ? `${((balanceFor("cash") + balanceFor("bank") + balanceFor("accounts_receivable") + balanceFor("inventory") + balanceFor("prepaid_expenses")) / liabilities).toFixed(2)}×` : "—"
   const maxValue = Math.max(1, ...monthly.flatMap((row) => [row.income, row.expenses]))
