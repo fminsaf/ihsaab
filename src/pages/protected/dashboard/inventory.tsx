@@ -36,7 +36,7 @@ const EMPTY_FORM: ProductForm = { name: "", sku: "", description: "", unit: "ite
 
 export default function InventoryPage() {
   const { bid, currentBusinessCurrency = "SAR" } = useOutletContext<Context>()
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -61,7 +61,7 @@ export default function InventoryPage() {
 
   const filtered = useMemo(() => products.filter((product) => product.is_archived === showArchived &&
     `${product.name} ${product.sku ?? ""} ${product.description ?? ""}`.toLowerCase().includes(search.toLowerCase())), [products, search, showArchived])
-  const format = (value: number) => new Intl.NumberFormat(undefined, { style: "currency", currency: currentBusinessCurrency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value || 0))
+  const format = (value: number) => new Intl.NumberFormat(locale === "ar" ? "ar-SA" : "en-SA", { style: "currency", currency: currentBusinessCurrency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value || 0))
 
   function startCreate() {
     setEditing(null)
