@@ -241,8 +241,8 @@ export default function ContactsPage() {
             <div className="relative">
               <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
               <Input
-                aria-label="Search contacts"
-                placeholder="Search contacts"
+                aria-label={t("searchContacts")}
+                placeholder={t("searchContacts")}
                 value={search}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                   setSearch(event.target.value)
@@ -283,7 +283,7 @@ export default function ContactsPage() {
                       {contact.company_name ||
                         contact.email ||
                         contact.phone ||
-                        "Contact"}
+                        t("contactFallback")}
                     </span>
                   </span>
                 </button>
@@ -292,7 +292,7 @@ export default function ContactsPage() {
               <div className="p-8 text-center">
                 <Users className="text-muted-foreground/50 mx-auto size-8" />
                 <p className="mt-3 text-sm font-medium">
-                  {search ? "No matching contacts" : t("noContacts")}
+                  {search ? t("noMatchingContacts") : t("noContacts")}
                 </p>
                 <p className="text-muted-foreground mt-1 text-xs">
                   Add a customer or vendor to get started.
@@ -315,7 +315,7 @@ export default function ContactsPage() {
                       {selected.name}
                     </h3>
                     <p className="text-muted-foreground text-sm">
-                      {selected.company_name || "Contact details"}
+                      {selected.company_name || t("contactDetails")}
                     </p>
                   </div>
                 </div>
@@ -327,7 +327,7 @@ export default function ContactsPage() {
                     onClick={openEditContact}
                   >
                     <Pencil className="size-4" />
-                    Edit
+                    {t("edit")}
                   </Button>
                   <Button
                     variant="destructive"
@@ -336,7 +336,7 @@ export default function ContactsPage() {
                     onClick={() => setDeleteOpen(true)}
                   >
                     <Trash2 className="size-4" />
-                    Delete
+                    {t("delete")}
                   </Button>
                 </div>
               </div>
@@ -360,7 +360,7 @@ export default function ContactsPage() {
                   </a>
                 )}
                 {!selected.email && !selected.phone && (
-                  <span>No contact details added.</span>
+                  <span>{t("noContactDetails")}</span>
                 )}
               </div>
               {selected.notes && (
@@ -370,7 +370,7 @@ export default function ContactsPage() {
               )}
               <div className="pt-5">
                 <div className="mb-4 flex items-center justify-between">
-                  <h4 className="font-semibold">Transaction history</h4>
+                  <h4 className="font-semibold">{t("transactionHistory")}</h4>
                   <span className="text-muted-foreground text-xs">
                     {transactions.length} record
                     {transactions.length === 1 ? "" : "s"}
@@ -413,7 +413,7 @@ export default function ContactsPage() {
                 ) : (
                   <div className="border-border rounded-xl border border-dashed p-8 text-center">
                     <p className="text-sm font-medium">
-                      No linked transactions yet
+                      {t("noLinkedTransactions")}
                     </p>
                     <p className="text-muted-foreground mt-1 text-xs">
                       Select this contact when recording a new transaction.
@@ -425,9 +425,9 @@ export default function ContactsPage() {
           ) : (
             <div className="flex h-full min-h-64 flex-col items-center justify-center text-center">
               <Users className="text-muted-foreground/50 size-10" />
-              <h3 className="mt-3 font-semibold">Select a contact</h3>
+              <h3 className="mt-3 font-semibold">{t("selectContact")}</h3>
               <p className="text-muted-foreground mt-1 text-sm">
-                Contact details and transaction history will appear here.
+                {t("contactHistoryHelp")}
               </p>
             </div>
           )}
