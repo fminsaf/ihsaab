@@ -6,6 +6,7 @@ import { Button } from "../../../components/ui/button"
 import { Input } from "../../../components/ui/input"
 import { Label } from "../../../components/ui/label"
 import { toast } from "../../../components/ui/toast"
+import { useLocale } from "../../../lib/i18n"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../../../components/ui/dialog"
 
 interface Contact {
@@ -29,6 +30,7 @@ interface OutletCtx { bid: string }
 
 export default function ContactsPage() {
   const { bid } = useOutletContext<OutletCtx>()
+  const { t } = useLocale()
   const [contacts, setContacts] = useState<Contact[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [selected, setSelected] = useState<Contact | null>(null)
@@ -127,8 +129,8 @@ export default function ContactsPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div><h2 className="text-xl font-bold">Your contacts</h2><p className="mt-1 text-sm text-muted-foreground">Keep customer and vendor details with their transaction history.</p></div>
-        <Button className="gap-2 rounded-full" onClick={openAddContact}><Plus className="size-4" /> Add contact</Button>
+        <div><h2 className="text-xl font-bold">{t("contactsTitle")}</h2><p className="mt-1 text-sm text-muted-foreground">{t("contactsSubtitle")}</p></div>
+        <Button className="gap-2 rounded-full" onClick={openAddContact}><Plus className="size-4" /> {t("addContact")}</Button>
       </div>
 
       <div className="grid min-h-[480px] gap-4 lg:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.6fr)]">
@@ -143,7 +145,7 @@ export default function ContactsPage() {
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground"><Users className="size-4" /></span>
                 <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{contact.name}</span><span className="block truncate text-xs text-muted-foreground">{contact.company_name || contact.email || contact.phone || "Contact"}</span></span>
               </button>
-            )) : <div className="p-8 text-center"><Users className="mx-auto size-8 text-muted-foreground/50" /><p className="mt-3 text-sm font-medium">{search ? "No matching contacts" : "No contacts yet"}</p><p className="mt-1 text-xs text-muted-foreground">Add a customer or vendor to get started.</p></div>}
+            )) : <div className="p-8 text-center"><Users className="mx-auto size-8 text-muted-foreground/50" /><p className="mt-3 text-sm font-medium">{search ? "No matching contacts" : "{t("noContacts")}"}</p><p className="mt-1 text-xs text-muted-foreground">Add a customer or vendor to get started.</p></div>}
           </div>
         </section>
 
