@@ -8,6 +8,7 @@ import { Label } from "../../../components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../../../components/ui/dialog"
 import { toast } from "../../../components/ui/toast"
+import { useLocale } from "../../../lib/i18n"
 
 interface Product {
   id: string
@@ -35,6 +36,7 @@ const EMPTY_FORM: ProductForm = { name: "", sku: "", description: "", unit: "ite
 
 export default function InventoryPage() {
   const { bid, currentBusinessCurrency = "SAR" } = useOutletContext<Context>()
+  const { t } = useLocale()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -140,8 +142,8 @@ export default function InventoryPage() {
 
   return <div className="mx-auto max-w-6xl space-y-5">
     <div className="flex flex-wrap items-end justify-between gap-3">
-      <div><h2 className="text-xl font-bold">Inventory</h2><p className="mt-1 text-sm text-muted-foreground">Manage products, available stock, and item prices.</p></div>
-      <div className="flex gap-2"><Button variant="outline" size="icon" aria-label="Refresh inventory" onClick={() => void load()}><RefreshCw className="size-4" /></Button>{!showArchived && <Button className="gap-2" onClick={startCreate}><Plus className="size-4" />Add product</Button>}</div>
+      <div><h2 className="text-xl font-bold">{t("inventoryTitle")}</h2><p className="mt-1 text-sm text-muted-foreground">{t("inventorySubtitle")}</p></div>
+      <div className="flex gap-2"><Button variant="outline" size="icon" aria-label="Refresh inventory" onClick={() => void load()}><RefreshCw className="size-4" /></Button>{!showArchived && <Button className="gap-2" onClick={startCreate}><Plus className="size-4" />{t("addProduct")}</Button>}</div>
     </div>
     {error && <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">Could not load inventory: {error}</p>}
     <div className="flex flex-wrap items-center gap-3">
