@@ -74,7 +74,7 @@ export function DashboardSidebar({
   const { locale, setLocale, t, direction } = useLocale();
   return (
     <aside
-      className={`border-border bg-card fixed inset-y-0 z-50 flex h-screen w-64 flex-col overflow-y-auto transition-transform duration-200 ease-in-out md:h-screen md:translate-x-0 md:overflow-y-auto ${direction === "rtl" ? "right-0 border-l" : "left-0 border-r"} ${
+      className={`dashboard-sidebar border-border bg-card fixed inset-y-0 z-50 flex h-screen w-64 flex-col overflow-y-auto transition-transform duration-200 ease-in-out md:h-screen md:translate-x-0 md:overflow-y-auto ${direction === "rtl" ? "right-0 border-l" : "left-0 border-r"} ${
         mobileSidebarOpen ? "translate-x-0" : direction === "rtl" ? "translate-x-full" : "-translate-x-full"
       }`}
     >
