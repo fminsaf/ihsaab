@@ -158,3 +158,32 @@
     display: none !important;
   }
 }
+
+
+/* Locale-aware direction and typography for Arabic-first Saudi businesses. */
+html[dir="rtl"] body {
+  font-family: "Noto Sans Arabic", "Tahoma", sans-serif;
+}
+
+html[dir="rtl"] .dashboard-sidebar {
+  left: auto;
+}
+
+/* Keep identifiers and financial values readable inside Arabic paragraphs. */
+html[dir="rtl"] :is(input[type="email"], input[type="url"], input[type="tel"], [dir="ltr"], .numeric-value) {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+html[dir="rtl"] :is(input, textarea, select) {
+  text-align: start;
+}
+
+html[dir="rtl"] .financial-statement {
+  direction: rtl;
+}
+
+/* Prevent mixed Arabic/Latin values from reordering punctuation unexpectedly. */
+[dir="auto"] {
+  unicode-bidi: plaintext;
+}
