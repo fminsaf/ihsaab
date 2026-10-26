@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "../../../components/ThemeToggle";
 import { BrandLogo } from "../../../components/BrandLogo";
+import { useLocale } from "../../../lib/i18n";
 
 export interface BusinessOption {
   id: string;
@@ -70,10 +71,11 @@ export function DashboardSidebar({
   onNewEntry,
   isLinkActive,
 }: DashboardSidebarProps) {
+  const { locale, setLocale, t, direction } = useLocale();
   return (
     <aside
-      className={`border-border bg-card fixed inset-y-0 left-0 z-50 flex h-screen w-64 flex-col overflow-y-auto border-r transition-transform duration-200 ease-in-out md:h-screen md:translate-x-0 md:overflow-y-auto ${
-        mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+      className={`border-border bg-card fixed inset-y-0 z-50 flex h-screen w-64 flex-col overflow-y-auto transition-transform duration-200 ease-in-out md:h-screen md:translate-x-0 md:overflow-y-auto ${direction === "rtl" ? "right-0 border-l" : "left-0 border-r"} ${
+        mobileSidebarOpen ? "translate-x-0" : direction === "rtl" ? "translate-x-full" : "-translate-x-full"
       }`}
     >
       {/* Brand / Logo */}
@@ -85,7 +87,7 @@ export function DashboardSidebar({
               Ihsaab
             </span>
             <span className="text-muted-foreground text-[10px] font-medium">
-              Accounting on Autopilot
+              محاسبة أسهل لأعمالك
             </span>
           </div>
         </Link>
@@ -123,7 +125,7 @@ export function DashboardSidebar({
           {switcherOpen && (
             <div className="border-border bg-popover absolute top-full right-0 left-0 z-50 mt-1.5 rounded-2xl border p-1.5 shadow-xl">
               <div className="text-muted-foreground px-2 py-1 text-[10px] font-bold tracking-wider uppercase">
-                Switch Business
+                {t("switchBusiness")}
               </div>
               <div className="max-h-48 space-y-0.5 overflow-y-auto">
                 {businesses.map((b) => {
@@ -153,7 +155,7 @@ export function DashboardSidebar({
                   className="text-primary hover:bg-primary/10 flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-medium transition"
                 >
                   <Plus className="size-3.5" />
-                  <span>Create New Business</span>
+                  <span>{t("createBusiness")}</span>
                 </Link>
               </div>
             </div>
@@ -175,7 +177,7 @@ export function DashboardSidebar({
           className="bg-primary text-primary-foreground hover:bg-primary/90 mb-2 flex w-full items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm font-semibold shadow-xs transition"
         >
           <Plus className="size-4 shrink-0" />
-          <span>New entry</span>
+          <span>{t("newEntry")}</span>
         </button>
         {navLinks.map((tab) => {
           const Icon = tab.icon;
@@ -208,6 +210,7 @@ export function DashboardSidebar({
             Appearance
           </span>
           <ThemeToggle className="size-9" />
+          <div className="flex rounded-full border border-border p-0.5" role="group" aria-label={t("language")}><button type="button" onClick={() => setLocale("ar")} aria-pressed={locale === "ar"} className={locale === "ar" ? "rounded-full bg-primary px-2.5 py-1 text-xs text-primary-foreground" : "rounded-full px-2.5 py-1 text-xs"}>عربي</button><button type="button" onClick={() => setLocale("en")} aria-pressed={locale === "en"} className={locale === "en" ? "rounded-full bg-primary px-2.5 py-1 text-xs text-primary-foreground" : "rounded-full px-2.5 py-1 text-xs"}>EN</button></div>
         </div>
         <Link
           to={`/b/${bid}/help`}
@@ -215,7 +218,7 @@ export function DashboardSidebar({
           className={`flex w-full items-center gap-2.5 rounded-2xl px-3 py-2 text-xs font-semibold transition ${currentPath.startsWith(`/b/${bid}/help`) ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
         >
           <CircleHelp className="size-4 shrink-0" />
-          <span className="truncate">Help</span>
+          <span className="truncate">{t("help")}</span>
         </Link>
         <Link
           to={`/b/${bid}/feedback`}
@@ -223,7 +226,7 @@ export function DashboardSidebar({
           className={`flex w-full items-center gap-2.5 rounded-2xl px-3 py-2 text-xs font-semibold transition ${currentPath.startsWith(`/b/${bid}/feedback`) ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
         >
           <MessageSquareText className="size-4 shrink-0" />
-          <span className="truncate">Feedback</span>
+          <span className="truncate">{t("feedback")}</span>
         </Link>
         {/* Business Settings Link */}
         <div>
