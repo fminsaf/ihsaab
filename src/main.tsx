@@ -24,9 +24,11 @@ import HelpPage from "./pages/protected/dashboard/help";
 import FeedbackPage from "./pages/protected/dashboard/feedback";
 import { Toaster } from "./components/ui/toast";
 import { ThemeProvider } from "./theme/ThemeProvider";
+import { LocaleProvider } from "./lib/i18n";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
+    <LocaleProvider>
     <ThemeProvider>
     <AuthProvider>
       <BrowserRouter>
@@ -65,5 +67,6 @@ createRoot(document.getElementById("root")!).render(
 
     <Toaster />
     </ThemeProvider>
+    </LocaleProvider>
   </StrictMode>,
 );
